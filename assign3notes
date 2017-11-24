@@ -1,2 +1,5 @@
 to do:
--at least make makefile to submit so that you have can get the tests and potentially some bonus points
+-makefile
+
+questions:
+-do we need a -v option?
