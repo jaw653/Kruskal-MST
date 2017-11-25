@@ -1,5 +1,7 @@
 to do:
 -make a new working branch for git
 
+-one way to make the algorithm faster would be to find the min and max while reading in the graph file
+
 questions:
 -do we need a -v option?
