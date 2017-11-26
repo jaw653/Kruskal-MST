@@ -35,15 +35,20 @@ static void swap(DA *, int, int);
 static int partition(DA *, int, int);
 static void quickSort(DA *, int, int);
 
+static DA *kruskal(DA *);
+
 int main(int argc, char *argv[]) {
+  if (argc == 1)
+    return 0;
+    
   FILE *graphFile = fopen(argv[1], "r");
 
   DA *arr = newDA(displayINTEGER);
   readInFile(graphFile, arr);       // Read in the file of edges
 
-  // First thing to do is sort the edges by weight
-  quickSort(arr, 0, sizeDA(arr));
+  DA *MST = kruskal(arr);
 
+  displayDA(stdout, MST);
 
   fclose(graphFile);
   return 0;
@@ -170,4 +175,32 @@ static void quickSort(DA *arr, int low, int high) {
     quickSort(arr, low, pivotLocation-1);
     quickSort(arr, pivotLocation+1, high);
   }
+}
+
+static DA *kruskal(DA *arr) {
+  DA *A = newDA(displayINTEGER);
+
+  int size = sizeDA(arr);
+  SET *set = newSET(displayINTEGER);
+
+  int i;
+  for (i = 0; i < size; i++) {
+    int currA = getVertex(getDA(arr, i), 0);
+    int currB = getVertex(getDA(arr, i), 1);
+
+    makeSET(set, newINTEGER(currA));
+    makeSET(set, newINTEGER(currB));
+  }
+
+  quickSort(arr, 0, size);
+
+  for (i = 0; i < size; i++) {
+    if (findSET(set, i) != findSET(set, i+1)) {
+      insertDA(A, getDA(arr, i));
+      unionSET(set, i, i+1);
+      i += 1;
+    }
+  }
+
+  return A;
 }
