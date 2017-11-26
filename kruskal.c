@@ -42,6 +42,7 @@ int main(int argc, char *argv[]) {
   readInFile(graphFile, arr);       // Read in the file of edges
 
   // First thing to do is sort the edges by weight
+  quickSort(arr, 0, sizeDA(arr));
 
 
   fclose(graphFile);
@@ -108,8 +109,10 @@ static void readInFile(FILE *fp, DA *array) {
 
     char *final = readToken(fp);
 
-    if (strcmp(final, ";") != 0)
+    if (final[0] != ';') {
       weight = atoi(final);
+      str = readToken(fp);
+    }
 
     EDGE *edgeToInsert = newEDGE(a, b, weight);
 
@@ -159,4 +162,12 @@ static int partition(DA *arr, int low, int high) {
   swap(arr, low, leftWall);
 
   return ++leftWall;
+}
+
+static void quickSort(DA *arr, int low, int high) {
+  if (low < high) {
+    int pivotLocation = partition(arr, low, high);
+    quickSort(arr, low, pivotLocation-1);
+    quickSort(arr, pivotLocation+1, high);
+  }
 }
