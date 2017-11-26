@@ -18,6 +18,9 @@ test: kruskal
 kruskal.o: kruskal.c
 	gcc $(OPTS) kruskal.c -c
 
+set.o: set.c set.h
+	gcc $(OPTS) set.c -c
+
 da.o: da.c da.h
 	gcc $(OPTS) da.c -c
 
