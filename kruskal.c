@@ -18,6 +18,7 @@ struct EDGE {
   int weight;
   int vertex_A;
   int vertex_B;
+  int index;
 };
 
 /* Edge functions */
@@ -26,6 +27,8 @@ static int getVertex(EDGE *, int);
 static void setVertex(EDGE *, int , int);
 static int getWeight(EDGE *);
 static void setWeight(EDGE *, int);
+static int getIndex(EDGE *);
+static int setIndex(EDGE *, int);
 
 /* Utility Functions */
 static void readInFile(FILE *, DA *);
@@ -61,11 +64,12 @@ int main(int argc, char *argv[]) {
 /***                           Helper Functions                             ***/
 /******************************************************************************/
 
-static EDGE *newEDGE(int a, int b, int weight) {
+static EDGE *newEDGE(int a, int b, int weight, int index) {
   EDGE *edge = malloc(sizeof(struct EDGE));
   edge->weight = weight;
   edge->vertex_A = a;
   edge->vertex_B = b;
+  edge->index = index;
 
   return edge;
 }
@@ -104,6 +108,18 @@ static void setWeight(EDGE *edge, int weight) {
   edge->weight = weight;
 }
 
+static int getIndex(EDGE *edge) {
+  if (edge != NULL)
+    return edge->index;
+}
+
+static void setIndex(EDGE *edge, int index) {
+  if (edge == NULL)
+    return;
+
+  edge->index = index;
+}
+
 static void readInFile(FILE *fp, DA *array) {
   char *str = readToken(fp);
 
@@ -119,7 +135,7 @@ static void readInFile(FILE *fp, DA *array) {
       str = readToken(fp);
     }
 
-    EDGE *edgeToInsert = newEDGE(a, b, weight);
+    EDGE *edgeToInsert = newEDGE(a, b, weight, sizeDA(array));
 
     insertDA(array, edgeToInsert);
 
@@ -134,20 +150,24 @@ static void swap(DA *arr, int index1, int index2) {
   int edge1_vertA = getVertex(edge1, 0);
   int edge1_vertB = getVertex(edge1, 1);
   int edge1_weight = getWeight(edge1);
+  int edge1_index = getIndex(edge1);
 
   int edge2_vertA = getVertex(edge2, 0);
   int edge2_vertB = getVertex(edge2, 1);
   int edge2_weight = getWeight(edge2);
+  int edge2_index = getIndex(edge2);
 
-  EDGE *tmp = newEDGE(edge1_vertA, edge1_vertB, edge1_weight);
+  EDGE *tmp = newEDGE(edge1_vertA, edge1_vertB, edge1_weight, edge1_index);
 
   setVertex(edge1, 0, edge2_vertA);
   setVertex(edge1, 1, edge2_vertB);
   setWeight(edge1, edge2_weight);
+  setIndex(edge1, edge2_index);
 
   setVertex(edge2, 0, tmp->vertex_A);
   setVertex(edge2, 1, tmp->vertex_B);
   setWeight(edge2, tmp->weight);
+  setIndex(edge2, tmp->index);
 }
 
 static int partition(DA *arr, int low, int high) {
@@ -183,6 +203,7 @@ static DA *kruskal(DA *arr) {
   int size = sizeDA(arr);
   SET *set = newSET(displayINTEGER);
 
+  // Make-Set for every vertex in the graph
   int i;
   for (i = 0; i < size; i++) {
     int currA = getVertex(getDA(arr, i), 0);
@@ -192,13 +213,16 @@ static DA *kruskal(DA *arr) {
     makeSET(set, newINTEGER(currB));
   }
 
-  quickSort(arr, 0, size);
+  // Sort edges of graph in ascending order by weight
+  quickSort(arr, 0, size);        // ?? qsort(arr, size, sizeof(struct EDGE), ...
 
   for (i = 0; i < size; i++) {
-    if (findSET(set, i) != findSET(set, i+1)) {
-      insertDA(A, getDA(arr, i));
-      unionSET(set, i, i+1);
-      i += 1;
+    int currA = getVertex(getDA(arr, i), 0);
+    int currB = getVertex(getDA(arr, i), 1);
+
+    if (findSET(set, i) != findSET(set, ++i)) {
+      insertDA(A, getDA(arr, i-1));
+      unionSET(set, i-1, i);
     }
   }
 
