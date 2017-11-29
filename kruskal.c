@@ -22,19 +22,19 @@ struct VERTEX {
 typedef struct EDGE EDGE;
 struct EDGE {
   int weight;
-  int vertex_A;
-  int vertex_B;
-  int index;
+  VERTEX *u;
+  VERTEX *v;
 };
 
+/* Vertex functions */
+static VERTEX *newVERTEX(int, int);
+
 /* Edge functions */
-static EDGE *newEDGE(int, int, int);
-static int getVertex(EDGE *, int);
-static void setVertex(EDGE *, int , int);
-static int getWeight(EDGE *);
-static void setWeight(EDGE *, int);
-static int getIndex(EDGE *);
-static int setIndex(EDGE *, int);
+static EDGE *newEDGE(VERTEX *, VERTEX *, int);
+//static int getVertex(EDGE *, int);
+//static void setVertex(EDGE *, int , int);
+//static int getWeight(EDGE *);
+//static void setWeight(EDGE *, int);
 
 /* Utility Functions */
 static void readInFile(FILE *, DA *);
@@ -54,7 +54,7 @@ int main(int argc, char *argv[]) {
 
   int i;
   for (i = 0; i < argc; i++) {
-    if (argv[i] == "-v") {
+    if (strcmp(argv[i], "-v") == 0) {
       printf("Jacob A. Wachs\n");
       return 0;
     }
@@ -83,24 +83,32 @@ int main(int argc, char *argv[]) {
 /******************************************************************************/
 /***                           Helper Functions                             ***/
 /******************************************************************************/
-static EDGE *newEDGE(int a, int b, int weight, int index) {
+static VERTEX *newVERTEX(int value, int index) {
+  VERTEX *v = malloc(sizeof(struct VERTEX));
+  v->value = value;
+  v->index = index;
+
+  return v;
+}
+
+static EDGE *newEDGE(VERTEX *u, VERTEX *v, int weight) {
   EDGE *edge = malloc(sizeof(struct EDGE));
+  edge->u = u;
+  edge->v = v;
   edge->weight = weight;
-  edge->vertex_A = a;
-  edge->vertex_B = b;
-  edge->index = index;
 
   return edge;
 }
 
-static int getVertex(EDGE *edge, int vertex) {
+
+static VERTEX getVertex(EDGE *edge, int vertex) {
   if (edge == NULL)
     return 0;
 
   if (vertex == 0)
-    return edge->vertex_A;
+    return edge->u;
   else
-    return edge->vertex_B;
+    return edge->v;
 }
 
 static void setVertex(EDGE *edge, int vertex, int newVal) {
@@ -108,10 +116,11 @@ static void setVertex(EDGE *edge, int vertex, int newVal) {
     return;
 
   if (vertex == 0)
-    edge->vertex_A = newVal;
+    edge->u = newVal;
   else
-    edge->vertex_B = newVal;
+    edge->v = newVal;
 }
+
 
 static int getWeight(EDGE *edge) {
   if (edge == NULL)
@@ -127,20 +136,9 @@ static void setWeight(EDGE *edge, int weight) {
   edge->weight = weight;
 }
 
-static int getIndex(EDGE *edge) {
-  if (edge != NULL)
-    return edge->index;
-}
-
-static void setIndex(EDGE *edge, int index) {
-  if (edge == NULL)
-    return;
-
-  edge->index = index;
-}
-
 static void readInFile(FILE *fp, DA *array) {
   char *str = readToken(fp);
+  int index = 0;
 
   while (str) {
     int a = atoi(str);
@@ -154,7 +152,11 @@ static void readInFile(FILE *fp, DA *array) {
       str = readToken(fp);
     }
 
-    EDGE *edgeToInsert = newEDGE(a, b, weight, sizeDA(array));
+    VERTEX *u = newVERTEX(a, index);
+    VERTEX *v = newVERTEX(b, ++index);
+    index += 1;
+
+    EDGE *edgeToInsert = newEDGE(u, v, weight);
 
     insertDA(array, edgeToInsert);
 
@@ -162,6 +164,7 @@ static void readInFile(FILE *fp, DA *array) {
   }
 }
 
+/*
 static void swap(DA *arr, int index1, int index2) {
   EDGE *edge1 = getDA(arr, index1);
   EDGE *edge2 = getDA(arr, index2);
@@ -169,25 +172,22 @@ static void swap(DA *arr, int index1, int index2) {
   int edge1_vertA = getVertex(edge1, 0);
   int edge1_vertB = getVertex(edge1, 1);
   int edge1_weight = getWeight(edge1);
-  int edge1_index = getIndex(edge1);
 
   int edge2_vertA = getVertex(edge2, 0);
   int edge2_vertB = getVertex(edge2, 1);
   int edge2_weight = getWeight(edge2);
-  int edge2_index = getIndex(edge2);
 
   EDGE *tmp = newEDGE(edge1_vertA, edge1_vertB, edge1_weight, edge1_index);
 
   setVertex(edge1, 0, edge2_vertA);
   setVertex(edge1, 1, edge2_vertB);
   setWeight(edge1, edge2_weight);
-  setIndex(edge1, edge2_index);
 
   setVertex(edge2, 0, tmp->vertex_A);
   setVertex(edge2, 1, tmp->vertex_B);
   setWeight(edge2, tmp->weight);
-  setIndex(edge2, tmp->index);
 }
+*/
 
 static int partition(DA *arr, int low, int high) {
   EDGE *pivot = getDA(arr, low);
@@ -245,12 +245,15 @@ static DA *kruskal(DA *arr) {
   return A;
 }
 
+
+/*
 static void printEDGE(DA *arr, void *edge) {
   EDGE *e = edge;
   int parentVal = getDA(findSET(e->))
   printf(" %d(%d)%d", )
 
 }
+*/
 
 static void displayMST(DA *arr) {
   int i;
