@@ -13,12 +13,14 @@ static void testMakeSet(SET *, void *);
 static void testFindSet(SET *, int);
 static void testUnionSet(SET *, int, int);
 static void testCountSet(SET *);
+static void display(SET *);
 
 int main(void) {
   SET *set = initSet(displayINTEGER);
 
   testMakeSet(set, newINTEGER(1));
   testMakeSet(set, newINTEGER(2));
+  testMakeSet(set, newINTEGER(3));
 
   testCountSet(set);
 
@@ -32,6 +34,8 @@ int main(void) {
   testFindSet(set, 1);
 
   testCountSet(set);
+
+  display(set);
 
   return 0;
 }
@@ -60,7 +64,7 @@ static void testFindSet(SET *s, int index) {
 }
 
 static void testUnionSet(SET *s, int index1, int index2) {
-  printf("Attempting to union val at index1 (%d) and index2 (%d) :: \n", index1, index2);
+  printf("Attempting to union val at index1 (index1 is %d) and index2 (%d) :: \n", index1, index2);
   printf("The rep of val at index1 is: %d. The rep of val at index2 is: %d.\n", findSET(s, index1), findSET(s, index2));
 
   int good = unionSET(s, index1, index2);
@@ -70,10 +74,16 @@ static void testUnionSet(SET *s, int index1, int index2) {
     return;
   }
 
-  printf("Union successful, val at index1's parent is now val at index2's parent.\n\n");
+  printf("Union successful, rep of val at index2's parent is now rep of val at index1's parent.\n\n");
 }
 
 static void testCountSet(SET *s) {
   int count = countSET(s);
   printf("Current number of representatives in the list is: %d.\n\n", count);
+}
+
+static void display(SET *s) {
+  printf("Set is: \n");
+  displaySET(stdout, s);
+  printf("\n");
 }
