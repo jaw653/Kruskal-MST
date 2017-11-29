@@ -13,6 +13,12 @@
 #include "integer.h"
 #include "da.h"
 
+typedef struct VERTEX VERTEX;
+struct VERTEX {
+  int value;
+  int index;
+};
+
 typedef struct EDGE EDGE;
 struct EDGE {
   int weight;
@@ -38,11 +44,21 @@ static void swap(DA *, int, int);
 static int partition(DA *, int, int);
 static void quickSort(DA *, int, int);
 
+/* Kruskal functions */
 static DA *kruskal(DA *);
+static void displayMST(DA *);
 
 int main(int argc, char *argv[]) {
   if (argc == 1)
     return 0;
+
+  int i;
+  for (i = 0; i < argc; i++) {
+    if (argv[i] == "-v") {
+      printf("Jacob A. Wachs\n");
+      return 0;
+    }
+  }
 
   FILE *graphFile = fopen(argv[1], "r");
 
@@ -51,9 +67,13 @@ int main(int argc, char *argv[]) {
 
   DA *MST = kruskal(arr);
 
-  displayDA(stdout, MST);
+
+
+
+
 
   fclose(graphFile);
+
   return 0;
 }
 
@@ -63,7 +83,6 @@ int main(int argc, char *argv[]) {
 /******************************************************************************/
 /***                           Helper Functions                             ***/
 /******************************************************************************/
-
 static EDGE *newEDGE(int a, int b, int weight, int index) {
   EDGE *edge = malloc(sizeof(struct EDGE));
   edge->weight = weight;
@@ -209,17 +228,14 @@ static DA *kruskal(DA *arr) {
     int currA = getVertex(getDA(arr, i), 0);
     int currB = getVertex(getDA(arr, i), 1);
 
-    makeSET(set, newINTEGER(currA));
-    makeSET(set, newINTEGER(currB));
+    int in1 = makeSET(set, newINTEGER(currA));
+    int in2 = makeSET(set, newINTEGER(currB));
   }
 
   // Sort edges of graph in ascending order by weight
   quickSort(arr, 0, size);        // ?? qsort(arr, size, sizeof(struct EDGE), ...
 
   for (i = 0; i < size; i++) {
-    int currA = getVertex(getDA(arr, i), 0);
-    int currB = getVertex(getDA(arr, i), 1);
-
     if (findSET(set, i) != findSET(set, ++i)) {
       insertDA(A, getDA(arr, i-1));
       unionSET(set, i-1, i);
@@ -227,4 +243,22 @@ static DA *kruskal(DA *arr) {
   }
 
   return A;
+}
+
+static void printEDGE(DA *arr, void *edge) {
+  EDGE *e = edge;
+  int parentVal = getDA(findSET(e->))
+  printf(" %d(%d)%d", )
+
+}
+
+static void displayMST(DA *arr) {
+  int i;
+  int size = sizeDA(arr);
+
+  for (i = 0; i < size; i++) {
+    printf("%d:", i);
+    printEDGE(arr, getDA(arr, i));
+    printf("\n");
+  }
 }
