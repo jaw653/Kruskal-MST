@@ -4,4 +4,6 @@ to do:
 -one way to make the algorithm faster would be to find the min and max while reading in the graph file
 
 questions:
+-I'm currently just printf'ing. Do we need to print to a file?
+-how to handle an printing an empty set?
 -do we need a -v option?
