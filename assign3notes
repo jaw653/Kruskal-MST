@@ -1,9 +1,16 @@
-to do:
--make a new working branch for git
-
--one way to make the algorithm faster would be to find the min and max while reading in the graph file
+To-Do:
+------
+-further test set.c to make sure edge cases are good
+-? potentially just use qsort() in kruskal.c
+-write kruskal.c
+-make sure the newlines are in all the correct places for displaying set
 
 questions:
+----------
 -I'm currently just printf'ing. Do we need to print to a file?
 -how to handle an printing an empty set?
 -do we need a -v option?
+
+ideas to make program faster:
+-----------------------------
+-find the min and max while reading in the graph
