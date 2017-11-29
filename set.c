@@ -85,6 +85,8 @@ int displaySET(FILE *fp, SET *d) {
     printNODE(fp, getDA(d->list, i));
     fprintf(fp, "\n");
   }
+
+  return 0;
 }
 
 
