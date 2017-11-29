@@ -26,6 +26,7 @@ struct NODE {
 };
 
 static NODE *newNODE(void *, NODE *, int);
+static void printNODE(FILE *, NODE *);
 
 SET *newSET(void (*d)(FILE *, void *)) {
   SET *set = malloc(sizeof(struct set));
@@ -62,10 +63,10 @@ int unionSET(SET *d, int index1, int index2) {
   if (rep1 == rep2)
     return 0;
 
-  NODE *node1 = getDA(d->list, index1);
-//  NODE *node2 = getDA(d->list, index2);
+//  NODE *node1 = getDA(d->list, index1);
+  NODE *node2 = getDA(d->list, rep2);
 
-  node1->parent = getDA(d->list, rep2);
+  node2->parent = getDA(d->list, rep1);
 
   d->numReps -= 1;
   return 1;
@@ -75,11 +76,17 @@ int countSET(SET *d) {
   return d->numReps;
 }
 
-/*
-int displaySET(FILE *fp, SET *d) {
 
+int displaySET(FILE *fp, SET *d) {
+  int i;
+  int size = sizeDA(d->list);
+  for (i = 0; i < size; i++) {
+    fprintf(fp, "%d:", i);
+    printNODE(fp, getDA(d->list, i));
+    printf("\n");
+  }
 }
-*/
+
 
 /******************************************************************************/
 /***                         Private Functions                              ***/
@@ -94,4 +101,11 @@ static NODE *newNODE(void *value, NODE *parent, int index) {
     node->parent = parent;
 
   return node;
+}
+
+static void printNODE(FILE *fp, NODE *node) {
+  printf(" %d", getINTEGER(node->value));
+  if (node->parent->index != node->index) {
+    printNODE(fp, node->parent);
+  }
 }
