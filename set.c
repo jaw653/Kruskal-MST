@@ -83,7 +83,7 @@ int displaySET(FILE *fp, SET *d) {
   for (i = 0; i < size; i++) {
     fprintf(fp, "%d:", i);
     printNODE(fp, getDA(d->list, i));
-    printf("\n");
+    fprintf(fp, "\n");
   }
 }
 
@@ -104,7 +104,7 @@ static NODE *newNODE(void *value, NODE *parent, int index) {
 }
 
 static void printNODE(FILE *fp, NODE *node) {
-  printf(" %d", getINTEGER(node->value));
+  fprintf(fp, " %d", getINTEGER(node->value));
   if (node->parent->index != node->index) {
     printNODE(fp, node->parent);
   }
