@@ -7,6 +7,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "set.h"
 #include "scanner.h"
@@ -31,13 +32,14 @@ static VERTEX *newVERTEX(int, int);
 
 /* Edge functions */
 static EDGE *newEDGE(VERTEX *, VERTEX *, int);
-//static int getVertex(EDGE *, int);
-//static void setVertex(EDGE *, int , int);
+static VERTEX *getVertex(EDGE *, int);
+static void setVertex(EDGE *, int , VERTEX *);
 //static int getWeight(EDGE *);
 //static void setWeight(EDGE *, int);
+static void displayEDGE(FILE *, void *);
 
 /* Utility Functions */
-static void readInFile(FILE *, DA *);
+static void readInFile(FILE *, DA *, DA *);
 
 /* Quicksort functions */
 static void swap(DA *, int, int);
@@ -46,7 +48,7 @@ static void quickSort(DA *, int, int);
 
 /* Kruskal functions */
 static DA *kruskal(DA *);
-static void displayMST(DA *);
+//static void displayMST(DA *);
 
 int main(int argc, char *argv[]) {
   if (argc == 1)
@@ -62,17 +64,17 @@ int main(int argc, char *argv[]) {
 
   FILE *graphFile = fopen(argv[1], "r");
 
-  DA *arr = newDA(displayINTEGER);
-  readInFile(graphFile, arr);       // Read in the file of edges
+  DA *edgeArr = newDA(displayEDGE);
+  DA *vertexArr = newDA(displayINTEGER);
 
-  DA *MST = kruskal(arr);
-
-
-
-
-
+  readInFile(graphFile, edgeArr, vertexArr);       // Read in the file of edges
 
   fclose(graphFile);
+
+  DA *MST = kruskal(edgeArr);
+
+  displayDA(stdout, MST);
+  printf("\n");
 
   return 0;
 }
@@ -101,7 +103,7 @@ static EDGE *newEDGE(VERTEX *u, VERTEX *v, int weight) {
 }
 
 
-static VERTEX getVertex(EDGE *edge, int vertex) {
+static VERTEX *getVertex(EDGE *edge, int vertex) {
   if (edge == NULL)
     return 0;
 
@@ -111,14 +113,14 @@ static VERTEX getVertex(EDGE *edge, int vertex) {
     return edge->v;
 }
 
-static void setVertex(EDGE *edge, int vertex, int newVal) {
+static void setVertex(EDGE *edge, int vertex, VERTEX *v) {
   if (edge == NULL)
     return;
 
   if (vertex == 0)
-    edge->u = newVal;
+    edge->u = v;
   else
-    edge->v = newVal;
+    edge->v = v;
 }
 
 
@@ -136,7 +138,7 @@ static void setWeight(EDGE *edge, int weight) {
   edge->weight = weight;
 }
 
-static void readInFile(FILE *fp, DA *array) {
+static void readInFile(FILE *fp, DA *array, DA *vertexArr) {
   char *str = readToken(fp);
   int index = 0;
 
@@ -153,7 +155,9 @@ static void readInFile(FILE *fp, DA *array) {
     }
 
     VERTEX *u = newVERTEX(a, index);
+    insertDA(vertexArr, u);
     VERTEX *v = newVERTEX(b, ++index);
+    insertDA(vertexArr, v);
     index += 1;
 
     EDGE *edgeToInsert = newEDGE(u, v, weight);
@@ -164,30 +168,29 @@ static void readInFile(FILE *fp, DA *array) {
   }
 }
 
-/*
+
 static void swap(DA *arr, int index1, int index2) {
   EDGE *edge1 = getDA(arr, index1);
   EDGE *edge2 = getDA(arr, index2);
 
-  int edge1_vertA = getVertex(edge1, 0);
-  int edge1_vertB = getVertex(edge1, 1);
+  VERTEX *edge1_vertA = getVertex(edge1, 0);
+  VERTEX *edge1_vertB = getVertex(edge1, 1);
   int edge1_weight = getWeight(edge1);
 
-  int edge2_vertA = getVertex(edge2, 0);
-  int edge2_vertB = getVertex(edge2, 1);
+  VERTEX *edge2_vertA = getVertex(edge2, 0);
+  VERTEX *edge2_vertB = getVertex(edge2, 1);
   int edge2_weight = getWeight(edge2);
 
-  EDGE *tmp = newEDGE(edge1_vertA, edge1_vertB, edge1_weight, edge1_index);
+  EDGE *tmp = newEDGE(edge1_vertA, edge1_vertB, edge1_weight);
 
   setVertex(edge1, 0, edge2_vertA);
   setVertex(edge1, 1, edge2_vertB);
   setWeight(edge1, edge2_weight);
 
-  setVertex(edge2, 0, tmp->vertex_A);
-  setVertex(edge2, 1, tmp->vertex_B);
+  setVertex(edge2, 0, tmp->u);
+  setVertex(edge2, 1, tmp->v);
   setWeight(edge2, tmp->weight);
 }
-*/
 
 static int partition(DA *arr, int low, int high) {
   EDGE *pivot = getDA(arr, low);
@@ -216,45 +219,67 @@ static void quickSort(DA *arr, int low, int high) {
   }
 }
 
-static DA *kruskal(DA *arr) {
-  DA *A = newDA(displayINTEGER);
+static DA *kruskal(DA *edgeArr) {
+  DA *A = newDA(displayEDGE);
 
-  int size = sizeDA(arr);
+  int size = sizeDA(edgeArr);
   SET *set = newSET(displayINTEGER);
+  DA *vertexArr = newDA(NULL);
 
   // Make-Set for every vertex in the graph
   int i;
-  for (i = 0; i < size; i++) {
-    int currA = getVertex(getDA(arr, i), 0);
-    int currB = getVertex(getDA(arr, i), 1);
+  for (i = 0; i < size; i++) {              // If vertex already exists, don't add it
+    VERTEX *u = getVertex(getDA(edgeArr, i), 0);
+    makeSET(set, newINTEGER(u->value));
 
-    int in1 = makeSET(set, newINTEGER(currA));
-    int in2 = makeSET(set, newINTEGER(currB));
+    VERTEX *v = getVertex(getDA(edgeArr, i), 1);
+    makeSET(set, newINTEGER(v->value));
   }
 
   // Sort edges of graph in ascending order by weight
-  quickSort(arr, 0, size);        // ?? qsort(arr, size, sizeof(struct EDGE), ...
+  quickSort(edgeArr, 0, size);        // ?? qsort(arr, size, sizeof(struct EDGE), ...
 
+  int index = 0;
   for (i = 0; i < size; i++) {
-    if (findSET(set, i) != findSET(set, ++i)) {
-      insertDA(A, getDA(arr, i-1));
-      unionSET(set, i-1, i);
+    EDGE *currEdge = getDA(edgeArr, i);
+    VERTEX *u = getVertex(currEdge, 0);
+    VERTEX *v = getVertex(currEdge, 1);
+    int uIndex = u->index;
+    int vIndex = v->index;
+
+    if ()
+    if (findSET(set, uIndex) != findSET(set, vIndex)) {
+      insertDA(A, getDA(edgeArr, index++));
+      unionSET(set, uIndex, vIndex);
     }
   }
 
   return A;
 }
 
+static void displayEDGE(FILE *fp, void *edge) {
+  EDGE *e = edge;
+  fprintf(fp, "%d-%d(%d)", getVertex(e, 0)->value, getVertex(e, 1)->value, e->weight);
+}
+
+static bool edgeExists(DA *edgeArr, EDGE *e) {
+  int i;
+  int size = sizeDA(edgeArr);
+
+  for (i = 0; i < size; i++) {
+    if ()
+  }
+}
 
 /*
 static void printEDGE(DA *arr, void *edge) {
   EDGE *e = edge;
-  int parentVal = getDA(findSET(e->))
-  printf(" %d(%d)%d", )
+  //int parentVal = getDA(findSET(e->))
+  printf(" 1" );
 
 }
 */
-
+/*
 static void displayMST(DA *arr) {
   int i;
   int size = sizeDA(arr);
@@ -265,3 +290,4 @@ static void displayMST(DA *arr) {
     printf("\n");
   }
 }
+*/

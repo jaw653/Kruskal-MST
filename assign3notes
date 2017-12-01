@@ -7,10 +7,13 @@ To-Do:
 
 questions:
 ----------
+-will the same vertex value be added twice to the tree? ...probably
 -I'm currently just printf'ing. Do we need to print to a file?
 -how to handle an printing an empty set?
 -do we need a -v option?
 
 ideas to make program faster:
 -----------------------------
+-program currently checks the entire array to see if vertex already exists probably results in linear time
 -find the min and max while reading in the graph
+-may need to keep a vertex array, sort that array, eliminate duplicates, then run makeset
