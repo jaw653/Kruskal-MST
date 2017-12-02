@@ -40,6 +40,7 @@ static void displayEDGE(FILE *, void *);
 
 /* Utility Functions */
 static void readInFile(FILE *, DA *, DA *);
+static DA *removeDuplicates(DA *, int);
 
 /* Quicksort functions */
 static void swap(DA *, int, int);
@@ -47,7 +48,7 @@ static int partition(DA *, int, int);
 static void quickSort(DA *, int, int);
 
 /* Kruskal functions */
-static DA *kruskal(DA *);
+static DA *kruskal(DA *, DA *);
 //static void displayMST(DA *);
 
 int main(int argc, char *argv[]) {
@@ -69,9 +70,14 @@ int main(int argc, char *argv[]) {
 
   readInFile(graphFile, edgeArr, vertexArr);       // Read in the file of edges
 
+  vertexArr = removeDuplicates(vertexArr, sizeDA(vertexArr));
+  printf("vertexArr is: \n");
+  displayDA(stdout, vertexArr);
+  printf("\n");
+
   fclose(graphFile);
 
-  DA *MST = kruskal(edgeArr);
+  DA *MST = kruskal(edgeArr, vertexArr);
 
   displayDA(stdout, MST);
   printf("\n");
@@ -168,6 +174,29 @@ static void readInFile(FILE *fp, DA *array, DA *vertexArr) {
   }
 }
 
+static DA *removeDuplicates(DA *vertexArr, int size) {
+  // sort array
+  if (size == 0 || size == 1)
+    return vertexArr;
+
+  DA *temp = newDA(displayINTEGER);
+
+  int i;
+  for (i = 0; i < size-1; i++) {
+    VERTEX *vi = getDA(vertexArr, i);
+    VERTEX *vii = getDA(vertexArr, i+1);
+    printf("vi value is: %d and vii value is: %d\n", vi->value, vii->value);
+    if (vi->value != vii->value) {
+      printf("adding %d to temp\n", vi->value);
+      insertDA(temp, vi);
+    }
+  }
+
+  insertDA(temp, getDA(vertexArr, size-1));
+
+  return temp;
+}
+
 
 static void swap(DA *arr, int index1, int index2) {
   EDGE *edge1 = getDA(arr, index1);
@@ -192,7 +221,21 @@ static void swap(DA *arr, int index1, int index2) {
   setWeight(edge2, tmp->weight);
 }
 
-static int partition(DA *arr, int low, int high) {
+static int partitionV(DA *arr, int low, int high) {
+  VERTEX *pivot = getDA(arr, low);
+  int leftWall = low;
+
+  int i;
+  for (i = low + 1; i < high; i++) {
+    VERTEX *vertex_i = getDA(arr, i);
+    if (vertex_i->value < pivot->value) {
+      leftWall += 1;
+
+    }
+  }
+}
+
+static int partitionE(DA *arr, int low, int high) {
   EDGE *pivot = getDA(arr, low);
   int leftWall = low;
 
@@ -211,28 +254,33 @@ static int partition(DA *arr, int low, int high) {
   return ++leftWall;
 }
 
-static void quickSort(DA *arr, int low, int high) {
+static void quickSort(DA *arr, int low, int high, char eOrV) {
   if (low < high) {
-    int pivotLocation = partition(arr, low, high);
+    int pivotLocation = 0;
+    if (eOrV == 'e')
+      pivotLocation = partitionE(arr, low, high);
+    else
+      pivotLocation = partitionV(arr, low, high);
     quickSort(arr, low, pivotLocation-1);
     quickSort(arr, pivotLocation+1, high);
   }
 }
 
-static DA *kruskal(DA *edgeArr) {
+static DA *kruskal(DA *edgeArr, DA *vertexArr) {
   DA *A = newDA(displayEDGE);
 
   int size = sizeDA(edgeArr);
+  int numVertices = sizeDA(vertexArr);
   SET *set = newSET(displayINTEGER);
-  DA *vertexArr = newDA(NULL);
+  //DA *vertexArr = newDA(NULL);
 
   // Make-Set for every vertex in the graph
   int i;
-  for (i = 0; i < size; i++) {              // If vertex already exists, don't add it
-    VERTEX *u = getVertex(getDA(edgeArr, i), 0);
+  for (i = 0; i < numVertices; i++) {              // If vertex already exists, don't add it
+    VERTEX *u = getDA(vertexArr, i);
     makeSET(set, newINTEGER(u->value));
 
-    VERTEX *v = getVertex(getDA(edgeArr, i), 1);
+    VERTEX *v = getDA(vertexArr, i);
     makeSET(set, newINTEGER(v->value));
   }
 
@@ -247,7 +295,6 @@ static DA *kruskal(DA *edgeArr) {
     int uIndex = u->index;
     int vIndex = v->index;
 
-    if ()
     if (findSET(set, uIndex) != findSET(set, vIndex)) {
       insertDA(A, getDA(edgeArr, index++));
       unionSET(set, uIndex, vIndex);
@@ -262,6 +309,7 @@ static void displayEDGE(FILE *fp, void *edge) {
   fprintf(fp, "%d-%d(%d)", getVertex(e, 0)->value, getVertex(e, 1)->value, e->weight);
 }
 
+/*
 static bool edgeExists(DA *edgeArr, EDGE *e) {
   int i;
   int size = sizeDA(edgeArr);
@@ -270,6 +318,7 @@ static bool edgeExists(DA *edgeArr, EDGE *e) {
     if ()
   }
 }
+*/
 
 /*
 static void printEDGE(DA *arr, void *edge) {
