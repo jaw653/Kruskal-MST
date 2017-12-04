@@ -30,9 +30,12 @@ static void displayEDGE(FILE *, void *);
 
 /* Utility Functions */
 static void readInFile(FILE *, DA *, DA *, RBT *);
+static int intCompare(const void *, const void *);
+static void sortVertices(DA *, int, int *);
+static int retrieveVertexIndex(int *, int, int, int);
 
 /* Kruskal functions */
-static DA *kruskal(DA *, DA *);
+static DA *kruskal(DA *, int *, int);
 //static void displayMST(DA *);
 
 int main(int argc, char *argv[]) {
@@ -55,17 +58,28 @@ int main(int argc, char *argv[]) {
 
   readInFile(graphFile, edgeArr, vertexArr, vertexTree);
 
+  //sort the array of vertices
+  int numVertices = sizeDA(vertexArr);
+  int primativeVertexArr[numVertices];
+  sortVertices(vertexArr, numVertices, primativeVertexArr);
+
+printf("primvertarr is: \n");
+for (i = 0; i < numVertices; i++) {
+  printf("%d, ", primativeVertexArr[i]);
+}
+
   fclose(graphFile);
 //  qsort(vertexArr, sizeDA(vertexArr), sizeof(struct VERTEX), compareVERTEX);
 
+/*
 printf("edgeArr is: \n");
 displayDA(stdout, edgeArr);
 printf("\n");
 printf("vertexArr is: \n");
 displayDA(stdout, vertexArr);
 printf("\n");
-
-  DA *MST = kruskal(edgeArr, vertexArr);
+*/
+  DA *MST = kruskal(edgeArr, primativeVertexArr, numVertices);
   return 0;
 }
 
@@ -102,7 +116,6 @@ static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
       str = readToken(fp);
     }
 
-    printf("u index is %d and v index is %d\n", vertexIndex, vertexIndex+1);
     EDGE *edgeToInsert = newEDGE(u, v, weight, vertexIndex, vertexIndex+1);
     vertexIndex += 2;
 
@@ -110,12 +123,6 @@ static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
     if (findRBT(tree, newINTEGER(u)) == 0) {
       insertRBT(tree, newINTEGER(u));
       insertDA(vertexArr, newINTEGER(u));
-    }
-    else {
-      //edgeToInsert->u_index = whatever the index of the first one inserted was
-      // idea:
-      // sort the array of vertices. binary search it for the one with the same value as the vertex to be insertedNode
-      // set edgeToInsert->u_index = the index of the result of the binary search
     }
 
     if (findRBT(tree, newINTEGER(v)) == 0) {
@@ -193,31 +200,26 @@ static void quickSort(DA *arr, int low, int high) {
   }
 }
 
-static DA *kruskal(DA *edgeArr, DA *vertexArr) {
+static DA *kruskal(DA *edgeArr, int *vertexArr, int numVertices) {
   DA *A = newDA(displayINTEGER);
 
-  int numVertices = sizeDA(vertexArr);
   int numEdges = sizeDA(edgeArr);
   SET *set = newSET(displayINTEGER);
 
   /* Making set for all vertices */
   int i;
   for (i = 0; i < numVertices; i++) {
-    INTEGER *intToInsert = getDA(vertexArr, i);
-    makeSET(set, intToInsert);
+    makeSET(set, newINTEGER(vertexArr[i]));
   }
 
   // sort the edges by weight
   quickSort(edgeArr, 0, numEdges);
-printf("sorted edgeArr: \n");
-displayDA(stdout, edgeArr);
-printf("\n");
 
   for (i = 0; i < numEdges; i++) {
     EDGE *currEdge = getDA(edgeArr, i);
-    int Udex = currEdge->u_index;
-    int Vdex = currEdge->v_index;
-    printf("%d->%d(%d) || uIndex = %d, vIndex = %d\n", currEdge->u, currEdge->v, currEdge->weight, Udex, Vdex);
+    int Udex = retrieveVertexIndex(vertexArr, 0, numVertices, currEdge->u);
+    int Vdex = retrieveVertexIndex(vertexArr, 0, numVertices, currEdge->v);
+    //printf("%d->%d(%d) || uIndex = %d, vIndex = %d\n", currEdge->u, currEdge->v, currEdge->weight, Udex, Vdex);
     if (findSET(set, Udex) != findSET(set, Vdex)) {
       insertDA(A, currEdge);
       unionSET(set, Udex, Vdex);
@@ -225,4 +227,38 @@ printf("\n");
   }
 
   return A;
+}
+
+static int intCompare(const void *a, const void *b) {
+  const int *ia = (const int *)a;
+  const int *ib = (const int *)b;
+
+  return *ia - *ib;
+}
+
+static void sortVertices(DA *arr, int size, int *A) {
+  /* Read dynamic array into an int array */
+  int i;
+  for (i = 0; i < size; i++) {
+    A[i] = getINTEGER(getDA(arr, i));
+  }
+
+  /* Use built-in quickSort Utility to sort the new array */
+  qsort(A, size+1, sizeof(int), intCompare);
+
+  for (i = 0; i < size; i++)
+    printf("%d\n", A[i]);
+
+  printf("\n");
+
+}
+
+static int retrieveVertexIndex(int *arr, int low, int high, int value) {
+  int middle = (high - low) / 2;
+  if (value == arr[middle])
+    return middle;
+  else if (value < arr[middle])
+    return retrieveVertexIndex(arr, low, middle, value);
+  else
+    return retrieveVertexIndex(arr, middle, high, value);
 }
