@@ -47,6 +47,8 @@ int makeSET(SET *d, void *value) {
 
 int findSET(SET *d, int index) {
   //returns the index of the representative of the value at the given index
+printf("size of dlist is : %d\n", sizeDA(d->list));
+printf("trying to access index %d\n", index);
   NODE *foundNode = getDA(d->list, index);
   NODE *parent = foundNode->parent;
 
