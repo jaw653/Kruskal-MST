@@ -1,5 +1,8 @@
 To-Do:
 ------
+-current problem is that edge u_index and v_index does not account for multiple of the same vertex. need to find a way to set newly inserted edges index markers to original of the vertex
+	--> sort arr of verts. binary search it for newly inserted vert val. set edgetoinsert->u_index = that value's index
+
 -further test set.c to make sure edge cases are good
 -? potentially just use qsort() in kruskal.c
 -write kruskal.c
