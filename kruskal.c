@@ -31,7 +31,7 @@ static void displayEDGE(FILE *, void *);
 /* Utility Functions */
 static void readInFile(FILE *, DA *, DA *, RBT *);
 static int intCompare(const void *, const void *);
-static void sortVertices(DA *, int, int *);
+static int *sortVertices(DA *, int);
 static int retrieveVertexIndex(int *, int, int, int);
 
 /* Kruskal functions */
@@ -60,26 +60,15 @@ int main(int argc, char *argv[]) {
 
   //sort the array of vertices
   int numVertices = sizeDA(vertexArr);
-  int primativeVertexArr[numVertices];
-  sortVertices(vertexArr, numVertices, primativeVertexArr);
-
-printf("primvertarr is: \n");
-for (i = 0; i < numVertices; i++) {
-  printf("%d, ", primativeVertexArr[i]);
-}
+  int *primativeVertexArr = sortVertices(vertexArr, numVertices);
 
   fclose(graphFile);
-//  qsort(vertexArr, sizeDA(vertexArr), sizeof(struct VERTEX), compareVERTEX);
 
-/*
-printf("edgeArr is: \n");
-displayDA(stdout, edgeArr);
-printf("\n");
-printf("vertexArr is: \n");
-displayDA(stdout, vertexArr);
-printf("\n");
-*/
   DA *MST = kruskal(edgeArr, primativeVertexArr, numVertices);
+
+  printf("after kruskal: \n");
+  displayDA(stdout, MST);
+  printf("\n");
   return 0;
 }
 
@@ -201,7 +190,7 @@ static void quickSort(DA *arr, int low, int high) {
 }
 
 static DA *kruskal(DA *edgeArr, int *vertexArr, int numVertices) {
-  DA *A = newDA(displayINTEGER);
+  DA *A = newDA(displayEDGE);
 
   int numEdges = sizeDA(edgeArr);
   SET *set = newSET(displayINTEGER);
@@ -236,7 +225,8 @@ static int intCompare(const void *a, const void *b) {
   return *ia - *ib;
 }
 
-static void sortVertices(DA *arr, int size, int *A) {
+static int *sortVertices(DA *arr, int size) {
+  int *A = malloc(sizeof(int) * size);
   /* Read dynamic array into an int array */
   int i;
   for (i = 0; i < size; i++) {
@@ -244,21 +234,17 @@ static void sortVertices(DA *arr, int size, int *A) {
   }
 
   /* Use built-in quickSort Utility to sort the new array */
-  qsort(A, size+1, sizeof(int), intCompare);
+  qsort(A, size, sizeof(int), intCompare);
 
-  for (i = 0; i < size; i++)
-    printf("%d\n", A[i]);
-
-  printf("\n");
-
+  return A;
 }
 
 static int retrieveVertexIndex(int *arr, int low, int high, int value) {
-  int middle = (high - low) / 2;
+  int middle = low + (high - low)/2;
   if (value == arr[middle])
     return middle;
   else if (value < arr[middle])
-    return retrieveVertexIndex(arr, low, middle, value);
+    return retrieveVertexIndex(arr, low, middle-1, value);
   else
-    return retrieveVertexIndex(arr, middle, high, value);
+    return retrieveVertexIndex(arr, middle+1, high, value);
 }
