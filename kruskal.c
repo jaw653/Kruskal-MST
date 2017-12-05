@@ -96,7 +96,7 @@ int main(int argc, char *argv[]) {
     insertDA(adjacencyList, n);
   }
 
-  addAdjacentNodes(adjacencyList, edgeArr);
+  addAdjacentNodes(adjacencyList, MST);
 
   // printing the adjacency lists below to know that they are correct, will ultimately get rid of this...
   printf("printing adjacency lists...\n");
@@ -139,7 +139,7 @@ static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
     int uIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->u);
     NODE *uNode = getDA(adjacencyList, uIndex);
     insertDA(uNode->list, newINTEGER(currEdge->v));
-    
+
     //find node with value v adjacencyList. Add u to v's list
     int vIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->v);
     NODE *vNode = getDA(adjacencyList, vIndex);
