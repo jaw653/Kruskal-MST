@@ -30,8 +30,12 @@ struct EDGE {
   int u_index, v_index;
 };
 
+/* MST functions */
+static void displayMST(DA *, DA *);
+
 /* Node functions */
 static NODE *newNODE(int);
+static void displayNODE(NODE *, DA *);
 static void addAdjacentNodes(DA *, DA *);
 static int binarySearchNodeIndex(DA *, int, int, int);
 
@@ -82,22 +86,38 @@ int main(int argc, char *argv[]) {
 
   DA *MST = kruskal(edgeArr, primativeVertexArr, numVertices);
 
+/*
   printf("after kruskal: \n");
   displayDA(stdout, MST);
   printf("\n");
+*/
 
 
+  //quickSort(MST, 0, sizeDA(MST), 'v');    // FIXME: this might be completely unneeded
 
-  quickSort(MST, 0, sizeDA(MST), 'v');    // FIXME: this might be completely unneeded
-  // create the adjacency list for the MST
+  /* Adding ordered list of vertices to be the 'spine' of the adjacency list */
   DA *adjacencyList = newDA(displayINTEGER);
   for (i = 0; i < numVertices; i++) {
     NODE *n = newNODE(primativeVertexArr[i]);
     insertDA(adjacencyList, n);
   }
 
+  // Adding adjacency lists to each 'spine' value
   addAdjacentNodes(adjacencyList, MST);
 
+  // Sort each individual adjacency list
+  for (i = 0; i < numVertices; i++) {
+    NODE *n = getDA(adjacencyList, i);
+    DA *currDA = n->list;
+    quickSort(currDA, 0, sizeDA(currDA), 'v');
+//    printf("%d->", n->value);
+//    displayDA(stdout, currDA);
+//    printf("\n");
+  }
+
+  displayMST(adjacencyList, MST);
+
+/*
   // printing the adjacency lists below to know that they are correct, will ultimately get rid of this...
   printf("printing adjacency lists...\n");
   for (i = 0; i < sizeDA(adjacencyList); i++) {
@@ -106,7 +126,7 @@ int main(int argc, char *argv[]) {
     displayDA(stdout, curr->list);
     printf("\n");
   }
-
+*/
   // sort the MST edges based on vertices to get the smallest vertex at the beginning
   // create an adjacency list for the MST
   // walk the sorted MST. If the edge is not visited, run BFS on it
@@ -116,6 +136,49 @@ int main(int argc, char *argv[]) {
 
 
 
+/******************************************************************************/
+/***                           MST Functions                                ***/
+/******************************************************************************/
+static void displayMST(DA *adjacencyList, DA *MST) {
+  if (sizeDA(adjacencyList) == 0) {   //FIXME: might just get rid of this...could throw off time complexity or be weird on an edge case
+    printf("EMPTY\n");
+    exit(0);
+  }
+
+  QUEUE *currQueue = newQUEUE(NULL);
+  QUEUE *nextQueue = newQUEUE(NULL);
+
+  int level = 0;
+  enqueue(currQueue, getDA(adjacencyList, 0));
+  bool isRoot = true;
+
+  while (sizeQUEUE(currQueue) > 0) {
+    //print the level number and colon
+    //then print the level, all the while adding the node to be printed to next level
+    //at the end of the print loop, set currQueue equal to nextQueue
+
+
+    printf("%d :", level++);
+
+    if (isRoot) {                       //FIXME: will need to make special print case for this as well
+      NODE *currNode = getDA(adjacencyList, 0);
+      DA *adjList = currNode->list;
+      int sizeAdjList = sizeDA(adjList);
+      for (i = 0; i < sizeAdjList; i++) {
+        enqueue(nextQueue, getDA(adjList, i));
+      }
+
+      displayNODE(dequeue(currQueue));
+      printf("\n");
+      currQueue = nextQueue;
+      isRoot = false;
+    }
+    else {
+
+    }
+  }
+
+}
 
 /******************************************************************************/
 /***                           Node Functions                               ***/
@@ -128,11 +191,14 @@ static NODE *newNODE(int x) {
   return n;
 }
 
+static void displayNODE(NODE *n, DA *edgeArr) {   // Note that the edge arr is the MST
+
+}
+
 static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
   //add currEdge adjacency info to adjacencyList
   int i;
   int size = sizeDA(edgeArr);
-  int numVertices = sizeDA(adjacencyList);
   for (i = 0; i < size; i++) {
     EDGE *currEdge = getDA(edgeArr, i);
     //find node with value u in adjacencyList. add v to u's list
