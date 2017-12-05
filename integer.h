@@ -10,5 +10,6 @@ extern int getINTEGER(INTEGER *);
 extern int setINTEGER(INTEGER *,int);
 extern void displayINTEGER(FILE *,void *);
 extern void freeINTEGER(INTEGER *);
+extern int compareINTEGER(void *, void *);
 
 #endif

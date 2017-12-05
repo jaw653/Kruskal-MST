@@ -18,13 +18,13 @@ newINTEGER(int x)
     return p;
     }
 
-int 
+int
 getINTEGER(INTEGER *v)
     {
     return v->value;
     }
 
-int 
+int
 setINTEGER(INTEGER *v,int x)
     {
     int old = v->value;
@@ -32,7 +32,7 @@ setINTEGER(INTEGER *v,int x)
     return old;
     }
 
-void 
+void
 displayINTEGER(FILE *fp,void *v)
     {
     fprintf(fp,"%d",getINTEGER((INTEGER *) v));
@@ -43,3 +43,13 @@ freeINTEGER(INTEGER *v)
     {
     free(v);
     }
+
+int
+compareINTEGER(void *n, void *n2) {
+  int val1 = getINTEGER(n);
+  int val2 = getINTEGER(n2);
+
+  if (val1 < val2) return -1;
+  else if (val1 > val2) return 1;
+  else return 0;
+}
