@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 //    printf("\n");
   }
 
-  displayMST(adjacencyList, MST);
+//  displayMST(adjacencyList, MST);
 
 /*
   // printing the adjacency lists below to know that they are correct, will ultimately get rid of this...
@@ -153,6 +153,7 @@ static void displayMST(DA *adjacencyList, DA *MST) {
   bool isRoot = true;
 
   while (sizeQUEUE(currQueue) > 0) {
+    int i;
     //print the level number and colon
     //then print the level, all the while adding the node to be printed to next level
     //at the end of the print loop, set currQueue equal to nextQueue
@@ -161,23 +162,34 @@ static void displayMST(DA *adjacencyList, DA *MST) {
     printf("%d :", level++);
 
     if (isRoot) {                       //FIXME: will need to make special print case for this as well
-      NODE *currNode = getDA(adjacencyList, 0);
+      NODE *currNode = peekQUEUE(currQueue);
       DA *adjList = currNode->list;
       int sizeAdjList = sizeDA(adjList);
       for (i = 0; i < sizeAdjList; i++) {
         enqueue(nextQueue, getDA(adjList, i));
       }
 
-      displayNODE(dequeue(currQueue));
+      displayNODE(dequeue(currQueue), MST);
       printf("\n");
-      currQueue = nextQueue;
+      currQueue = nextQueue;      //FIXME: might need to change this to a full-on copy
       isRoot = false;
     }
     else {
+      int size = sizeQUEUE(currQueue);
+      for (i = 0; i < size; i++) {
+        NODE *currNode = peekQUEUE(currQueue);
+        DA *currAdjList = currNode->list;
+        int sizeAdjList = sizeDA(currAdjList);
+        for (i = 0; i < sizeAdjList; i++) {
+          enqueue(nextQueue, getDA(currAdjList, i));
+        }
 
+        displayNODE(dequeue(currQueue), MST);
+        printf("\n");
+        currQueue = nextQueue;
+      }
     }
   }
-
 }
 
 /******************************************************************************/
@@ -204,12 +216,12 @@ static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
     //find node with value u in adjacencyList. add v to u's list
     int uIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->u);
     NODE *uNode = getDA(adjacencyList, uIndex);
-    insertDA(uNode->list, newINTEGER(currEdge->v));
+    insertDA(uNode->list, newNODE(currEdge->v));
 
     //find node with value v adjacencyList. Add u to v's list
     int vIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->v);
     NODE *vNode = getDA(adjacencyList, vIndex);
-    insertDA(vNode->list, newINTEGER(currEdge->u));
+    insertDA(vNode->list, newNODE(currEdge->u));
 
   }
 }
