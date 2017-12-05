@@ -1,5 +1,7 @@
 To-Do:
 ------
+-currently working on displaying. Need to write displayNODE() and then test displayMST()...then just test and stuff...
+
 -make a function, or add on functionality to count the total weight of the graph
 -edit displayEDGE() to display node value(first node in adj list) weight
 -further test set.c to make sure edge cases are good
