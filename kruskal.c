@@ -21,10 +21,11 @@
 typedef struct EDGE EDGE;
 struct EDGE {
   int u, v, weight;
+  int u_index, v_index;
 };
 
 /* Edge functions */
-static EDGE *newEDGE(int, int, int);
+static EDGE *newEDGE(int, int, int, int, int);
 static void displayEDGE(FILE *, void *);
 
 /* Utility Functions */
@@ -32,6 +33,10 @@ static void readInFile(FILE *, DA *, DA *, RBT *);
 static int intCompare(const void *, const void *);
 static int *sortVertices(DA *, int);
 static int retrieveVertexIndex(int *, int, int, int);
+static void swap(DA *, int, int);
+static int partition(DA *, int, int, char);
+static void quickSort(DA *, int, int, char);
+static DA *sortMST(DA *);
 
 /* Kruskal functions */
 static DA *kruskal(DA *, int *, int);
@@ -65,9 +70,15 @@ int main(int argc, char *argv[]) {
 
   DA *MST = kruskal(edgeArr, primativeVertexArr, numVertices);
 
+  // sort the MST edges based on vertices to get the smallest vertex at the beginning
+  // create an adjacency list for the MST
+  // walk the sorted MST. If the edge is not visited, run BFS on it
+
   printf("after kruskal: \n");
   displayDA(stdout, MST);
   printf("\n");
+
+  sortMST(MST);
   return 0;
 }
 
@@ -77,11 +88,13 @@ int main(int argc, char *argv[]) {
 /******************************************************************************/
 /***                           Helper Functions                             ***/
 /******************************************************************************/
-static EDGE *newEDGE(int u, int v, int weight) {
+static EDGE *newEDGE(int u, int v, int weight, int index1, int index2) {
   EDGE *e = malloc(sizeof(struct EDGE));
   e->u = u;
   e->v = v;
   e->weight = weight;
+  e->u_index = index1;
+  e->v_index = index2;
 
   return e;
 }
@@ -89,6 +102,7 @@ static EDGE *newEDGE(int u, int v, int weight) {
 static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
   char *str = readToken(fp);
 
+  int vertexIndex = 0;
   while (str) {
     int u = atoi(str);
     int v = atoi(readToken(fp));
@@ -101,7 +115,8 @@ static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
       str = readToken(fp);
     }
 
-    EDGE *edgeToInsert = newEDGE(u, v, weight);
+    EDGE *edgeToInsert = newEDGE(u, v, weight, vertexIndex, vertexIndex+1);
+    vertexIndex += 2;
 
 
     if (findRBT(tree, newINTEGER(u)) == 0) {
@@ -133,23 +148,31 @@ static void swap(DA *arr, int index1, int index2) {
   int u1 = edge1->u;
   int v1 = edge1->v;
   int weight1 = edge1->weight;
+  int udex1 = edge1->u_index;
+  int vdex1 = edge1->v_index;
 
   int u2 = edge2->u;
   int v2 = edge2->v;
   int weight2 = edge2->weight;
+  int udex2 = edge2->u_index;
+  int vdex2 = edge2->v_index;
 
-  EDGE *temp = newEDGE(u1, v1, weight1);
+  EDGE *temp = newEDGE(u1, v1, weight1, udex1, vdex1);
 
   edge1->u = u2;
   edge1->v = v2;
   edge1->weight = weight2;
+  edge1->u_index = udex2;
+  edge1->v_index = vdex2;
 
   edge2->u = temp->u;
   edge2->v = temp->v;
   edge2->weight = temp->weight;
+  edge2->u_index = temp->u_index;
+  edge2->v_index = temp->v_index;
 }
 
-static int partition(DA *arr, int low, int high) {
+static int partition(DA *arr, int low, int high, char e) {
   EDGE *pivot = getDA(arr, low);
   int leftWall = low;
 
@@ -157,9 +180,17 @@ static int partition(DA *arr, int low, int high) {
   for (i = low + 1; i < high; i++) {
     // if a[i] < pivot
     EDGE *edge_i = getDA(arr, i);
-    if (edge_i->weight < pivot->weight) {
-      leftWall += 1;
-      swap(arr, i, leftWall);
+    if (e == 'e') {
+      if (edge_i->weight < pivot->weight) {
+        leftWall += 1;
+        swap(arr, i, leftWall);
+      }
+    }
+    else {
+      if (edge_i->u < pivot->u) {
+        leftWall += 1;
+        swap(arr, i, leftWall);
+      }
     }
   }
 
@@ -168,11 +199,18 @@ static int partition(DA *arr, int low, int high) {
   return ++leftWall;
 }
 
-static void quickSort(DA *arr, int low, int high) {
+static void quickSort(DA *arr, int low, int high, char e) {
   if (low < high) {
-    int pivotLocation = partition(arr, low, high);
-    quickSort(arr, low, pivotLocation-1);
-    quickSort(arr, pivotLocation+1, high);
+    if (e == 'e') {
+      int pivotLocation = partition(arr, low, high, 'e');
+      quickSort(arr, low, pivotLocation-1, 'e');
+      quickSort(arr, pivotLocation+1, high, 'e');
+    }
+    else {
+      int pivotLocation = partition(arr, low, high, 'v');
+      quickSort(arr, low, pivotLocation-1, 'v');
+      quickSort(arr, pivotLocation+1, high, 'v');
+    }
   }
 }
 
@@ -189,7 +227,7 @@ static DA *kruskal(DA *edgeArr, int *vertexArr, int numVertices) {
   }
 
   // sort the edges by weight
-  quickSort(edgeArr, 0, numEdges);
+  quickSort(edgeArr, 0, numEdges, 'e');
 
   for (i = 0; i < numEdges; i++) {
     EDGE *currEdge = getDA(edgeArr, i);
@@ -234,4 +272,11 @@ static int retrieveVertexIndex(int *arr, int low, int high, int value) {
     return retrieveVertexIndex(arr, low, middle-1, value);
   else
     return retrieveVertexIndex(arr, middle+1, high, value);
+}
+
+static DA *sortMST(DA *MST) {
+  quickSort(MST, 0, sizeDA(MST), 'v');
+  printf("MST sorted by u value is: \n");
+  displayDA(stdout, MST);
+  printf("\n");
 }
