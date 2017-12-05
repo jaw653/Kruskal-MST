@@ -21,11 +21,10 @@
 typedef struct EDGE EDGE;
 struct EDGE {
   int u, v, weight;
-  int u_index, v_index;
 };
 
 /* Edge functions */
-static EDGE *newEDGE(int, int, int, int, int);
+static EDGE *newEDGE(int, int, int);
 static void displayEDGE(FILE *, void *);
 
 /* Utility Functions */
@@ -78,13 +77,11 @@ int main(int argc, char *argv[]) {
 /******************************************************************************/
 /***                           Helper Functions                             ***/
 /******************************************************************************/
-static EDGE *newEDGE(int u, int v, int weight, int index1, int index2) {
+static EDGE *newEDGE(int u, int v, int weight) {
   EDGE *e = malloc(sizeof(struct EDGE));
   e->u = u;
   e->v = v;
   e->weight = weight;
-  e->u_index = index1;
-  e->v_index = index2;
 
   return e;
 }
@@ -92,7 +89,6 @@ static EDGE *newEDGE(int u, int v, int weight, int index1, int index2) {
 static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
   char *str = readToken(fp);
 
-  int vertexIndex = 0;
   while (str) {
     int u = atoi(str);
     int v = atoi(readToken(fp));
@@ -105,8 +101,7 @@ static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
       str = readToken(fp);
     }
 
-    EDGE *edgeToInsert = newEDGE(u, v, weight, vertexIndex, vertexIndex+1);
-    vertexIndex += 2;
+    EDGE *edgeToInsert = newEDGE(u, v, weight);
 
 
     if (findRBT(tree, newINTEGER(u)) == 0) {
@@ -138,28 +133,20 @@ static void swap(DA *arr, int index1, int index2) {
   int u1 = edge1->u;
   int v1 = edge1->v;
   int weight1 = edge1->weight;
-  int udex1 = edge1->u_index;
-  int vdex1 = edge1->v_index;
 
   int u2 = edge2->u;
   int v2 = edge2->v;
   int weight2 = edge2->weight;
-  int udex2 = edge2->u_index;
-  int vdex2 = edge2->v_index;
 
-  EDGE *temp = newEDGE(u1, v1, weight1, udex1, vdex1);
+  EDGE *temp = newEDGE(u1, v1, weight1);
 
   edge1->u = u2;
   edge1->v = v2;
   edge1->weight = weight2;
-  edge1->u_index = udex2;
-  edge1->v_index = vdex2;
 
   edge2->u = temp->u;
   edge2->v = temp->v;
   edge2->weight = temp->weight;
-  edge2->u_index = temp->u_index;
-  edge2->v_index = temp->v_index;
 }
 
 static int partition(DA *arr, int low, int high) {
