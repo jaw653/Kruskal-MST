@@ -1,5 +1,7 @@
 To-Do:
 ------
+-make a function, or add on functionality to count the total weight of the graph
+-edit displayEDGE() to display node value(first node in adj list) weight
 -further test set.c to make sure edge cases are good
 -make sure the newlines are in all the correct places for displaying set
 
