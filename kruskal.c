@@ -18,11 +18,22 @@
 #include "queue.h"
 #include "cda.h"
 
+typedef struct NODE NODE;
+struct NODE {
+  int value;
+  DA *list;
+};
+
 typedef struct EDGE EDGE;
 struct EDGE {
   int u, v, weight;
   int u_index, v_index;
 };
+
+/* Node functions */
+static NODE *newNODE(int);
+static void addAdjacentNodes(DA *, DA *);
+static int binarySearchNodeIndex(DA *, int, int, int);
 
 /* Edge functions */
 static EDGE *newEDGE(int, int, int, int, int);
@@ -33,10 +44,11 @@ static void readInFile(FILE *, DA *, DA *, RBT *);
 static int intCompare(const void *, const void *);
 static int *sortVertices(DA *, int);
 static int retrieveVertexIndex(int *, int, int, int);
+
+/* QuickSort functions */
 static void swap(DA *, int, int);
 static int partition(DA *, int, int, char);
 static void quickSort(DA *, int, int, char);
-static DA *sortMST(DA *);
 
 /* Kruskal functions */
 static DA *kruskal(DA *, int *, int);
@@ -70,15 +82,35 @@ int main(int argc, char *argv[]) {
 
   DA *MST = kruskal(edgeArr, primativeVertexArr, numVertices);
 
-  // sort the MST edges based on vertices to get the smallest vertex at the beginning
-  // create an adjacency list for the MST
-  // walk the sorted MST. If the edge is not visited, run BFS on it
-
   printf("after kruskal: \n");
   displayDA(stdout, MST);
   printf("\n");
 
-  sortMST(MST);
+
+
+  quickSort(MST, 0, sizeDA(MST), 'v');    // FIXME: this might be completely unneeded
+  // create the adjacency list for the MST
+  DA *adjacencyList = newDA(displayINTEGER);
+  for (i = 0; i < numVertices; i++) {
+    NODE *n = newNODE(primativeVertexArr[i]);
+    insertDA(adjacencyList, n);
+  }
+
+  addAdjacentNodes(adjacencyList, edgeArr);
+
+  // printing the adjacency lists below to know that they are correct, will ultimately get rid of this...
+  printf("printing adjacency lists...\n");
+  for (i = 0; i < sizeDA(adjacencyList); i++) {
+    NODE *curr = getDA(adjacencyList, i);
+    printf("%d->", curr->value);
+    displayDA(stdout, curr->list);
+    printf("\n");
+  }
+
+  // sort the MST edges based on vertices to get the smallest vertex at the beginning
+  // create an adjacency list for the MST
+  // walk the sorted MST. If the edge is not visited, run BFS on it
+
   return 0;
 }
 
@@ -86,7 +118,50 @@ int main(int argc, char *argv[]) {
 
 
 /******************************************************************************/
-/***                           Helper Functions                             ***/
+/***                           Node Functions                               ***/
+/******************************************************************************/
+static NODE *newNODE(int x) {
+  NODE *n = malloc(sizeof(struct NODE));
+  n->value = x;
+  n->list = newDA(displayINTEGER);      //FIXME: might need to make a displayNODE function that goes here
+
+  return n;
+}
+
+static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
+  //add currEdge adjacency info to adjacencyList
+  int i;
+  int size = sizeDA(edgeArr);
+  int numVertices = sizeDA(adjacencyList);
+  for (i = 0; i < size; i++) {
+    EDGE *currEdge = getDA(edgeArr, i);
+    //find node with value u in adjacencyList. add v to u's list
+    int uIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->u);
+    NODE *uNode = getDA(adjacencyList, uIndex);
+    insertDA(uNode->list, newINTEGER(currEdge->v));
+    
+    //find node with value v adjacencyList. Add u to v's list
+    int vIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->v);
+    NODE *vNode = getDA(adjacencyList, vIndex);
+    insertDA(vNode->list, newINTEGER(currEdge->u));
+
+  }
+}
+
+static int binarySearchNodeIndex(DA *arr, int low, int high, int value) {
+  int middle = low + (high - low)/2;
+  NODE *curr = getDA(arr, middle);
+  if (value == curr->value)
+    return middle;
+  else if (value < curr->value)
+    return binarySearchNodeIndex(arr, low, middle-1, value);
+  else
+    return binarySearchNodeIndex(arr, middle+1, high, value);
+}
+
+
+/******************************************************************************/
+/***                           Edge Functions                               ***/
 /******************************************************************************/
 static EDGE *newEDGE(int u, int v, int weight, int index1, int index2) {
   EDGE *e = malloc(sizeof(struct EDGE));
@@ -99,6 +174,15 @@ static EDGE *newEDGE(int u, int v, int weight, int index1, int index2) {
   return e;
 }
 
+static void displayEDGE(FILE *fp, void *edge) {
+  EDGE *e = edge;
+  fprintf(fp, "%d->%d(%d)", e->u, e->v, e->weight);
+}
+
+
+/******************************************************************************/
+/***                           Utility Functions                            ***/
+/******************************************************************************/
 static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
   char *str = readToken(fp);
 
@@ -136,11 +220,41 @@ static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
   }
 }
 
-static void displayEDGE(FILE *fp, void *edge) {
-  EDGE *e = edge;
-  fprintf(fp, "%d->%d(%d)", e->u, e->v, e->weight);
+static int intCompare(const void *a, const void *b) {
+  const int *ia = (const int *)a;
+  const int *ib = (const int *)b;
+
+  return *ia - *ib;
 }
 
+static int *sortVertices(DA *arr, int size) {
+  int *A = malloc(sizeof(int) * size);
+  /* Read dynamic array into an int array */
+  int i;
+  for (i = 0; i < size; i++) {
+    A[i] = getINTEGER(getDA(arr, i));
+  }
+
+  /* Use built-in quickSort Utility to sort the new array */
+  qsort(A, size, sizeof(int), intCompare);
+
+  return A;
+}
+
+static int retrieveVertexIndex(int *arr, int low, int high, int value) {
+  int middle = low + (high - low)/2;
+  if (value == arr[middle])
+    return middle;
+  else if (value < arr[middle])
+    return retrieveVertexIndex(arr, low, middle-1, value);
+  else
+    return retrieveVertexIndex(arr, middle+1, high, value);
+}
+
+
+/******************************************************************************/
+/***                           QuickSort Functions                          ***/
+/******************************************************************************/
 static void swap(DA *arr, int index1, int index2) {
   EDGE *edge1 = getDA(arr, index1);
   EDGE *edge2 = getDA(arr, index2);
@@ -214,6 +328,10 @@ static void quickSort(DA *arr, int low, int high, char e) {
   }
 }
 
+
+/******************************************************************************/
+/***                           Kruskal Functions                            ***/
+/******************************************************************************/
 static DA *kruskal(DA *edgeArr, int *vertexArr, int numVertices) {
   DA *A = newDA(displayEDGE);
 
@@ -241,42 +359,4 @@ static DA *kruskal(DA *edgeArr, int *vertexArr, int numVertices) {
   }
 
   return A;
-}
-
-static int intCompare(const void *a, const void *b) {
-  const int *ia = (const int *)a;
-  const int *ib = (const int *)b;
-
-  return *ia - *ib;
-}
-
-static int *sortVertices(DA *arr, int size) {
-  int *A = malloc(sizeof(int) * size);
-  /* Read dynamic array into an int array */
-  int i;
-  for (i = 0; i < size; i++) {
-    A[i] = getINTEGER(getDA(arr, i));
-  }
-
-  /* Use built-in quickSort Utility to sort the new array */
-  qsort(A, size, sizeof(int), intCompare);
-
-  return A;
-}
-
-static int retrieveVertexIndex(int *arr, int low, int high, int value) {
-  int middle = low + (high - low)/2;
-  if (value == arr[middle])
-    return middle;
-  else if (value < arr[middle])
-    return retrieveVertexIndex(arr, low, middle-1, value);
-  else
-    return retrieveVertexIndex(arr, middle+1, high, value);
-}
-
-static DA *sortMST(DA *MST) {
-  quickSort(MST, 0, sizeDA(MST), 'v');
-  printf("MST sorted by u value is: \n");
-  displayDA(stdout, MST);
-  printf("\n");
 }
