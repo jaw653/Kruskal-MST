@@ -87,15 +87,6 @@ int main(int argc, char *argv[]) {
 
   DA *MST = kruskal(edgeArr, primativeVertexArr, numVertices);
 
-/*
-  printf("after kruskal: \n");
-  displayDA(stdout, MST);
-  printf("\n");
-*/
-
-
-  //quickSort(MST, 0, sizeDA(MST), 'v');    // FIXME: this might be completely unneeded
-
   /* Adding ordered list of vertices to be the 'spine' of the adjacency list */
   DA *adjacencyList = newDA(displayINTEGER);    //FIXME: this might need to be displayNODE
   for (i = 0; i < numVertices; i++) {
@@ -111,19 +102,7 @@ int main(int argc, char *argv[]) {
     NODE *n = getDA(adjacencyList, i);
     DA *currDA = n->list;
     quickSort(currDA, 0, sizeDA(currDA), 'v');
-//    printf("%d->", n->value);
-//    displayDA(stdout, currDA);
-//    printf("\n");
   }
-
-    // printing the adjacency lists below to know that they are correct, will ultimately get rid of this...
-    printf("printing adjacency lists...\n");
-    for (i = 0; i < sizeDA(adjacencyList); i++) {
-      NODE *curr = getDA(adjacencyList, i);
-      printf("%d->", curr->value);
-      displayDA(stdout, curr->list);
-      printf("\n");
-    }
 
   displayMST(adjacencyList);
   //printf("\n");
@@ -153,14 +132,17 @@ static void displayMST(DA *adjacencyList) {
   enqueue(currQueue, getDA(adjacencyList, 0));
   bool isRoot = true;
   int mainIndex = 1;
+  int totalWeight = 0;
 
   while (sizeQUEUE(currQueue) > 0) {
     QUEUE *nextQueue = newQUEUE(NULL);
 
     printf("%d :", level++);
 
+
     if (isRoot) {
       NODE *currNode = dequeue(currQueue);
+      totalWeight += currNode->weight;
       displayNODE(currNode, 1);
       currNode = findMainVersion(adjacencyList, currNode);
       currNode->visited = 1;
@@ -185,6 +167,7 @@ static void displayMST(DA *adjacencyList) {
       int sizeCurr = sizeQUEUE(currQueue);
       for (i = 0; i < sizeCurr; i++) {
         NODE *currNode = dequeue(currQueue);
+        totalWeight += currNode->weight;
         displayNODE(currNode, 0);
         currNode = findMainVersion(adjacencyList, currNode);
         currNode->visited = 1;
@@ -199,20 +182,26 @@ static void displayMST(DA *adjacencyList) {
         }
       }
 
-      printf("\n");
       currQueue = nextQueue;
+      printf("\n");
+    }
 
-      if (sizeQUEUE(currQueue) == 0) {
-        int i;
-        for (i = mainIndex; i < size; i++) {
-          NODE *currNode = getDA(adjacencyList, i);
-          if (currNode->visited == 0) {
-            enqueue(currQueue, currNode);
-            break;
-          }
+    if (sizeQUEUE(currQueue) == 0) {
+      int i;
+      for (i = mainIndex; i < size; i++) {
+        NODE *currNode = getDA(adjacencyList, i);
+        if (currNode->visited == 0) {
+          enqueue(currQueue, currNode);
+          level = 0;
+          isRoot = true;
+          printf("totalWeight is %d\n", totalWeight);
+          totalWeight = 0;
+          printf("---\n");
+          break;
         }
       }
     }
+
   }
 }
 
@@ -241,10 +230,11 @@ static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
   //add currEdge adjacency info to adjacencyList
   int i;
   int size = sizeDA(edgeArr);
+  int numVertices = sizeDA(adjacencyList);
   for (i = 0; i < size; i++) {
     EDGE *currEdge = getDA(edgeArr, i);
     //find node with value u in adjacencyList. add v to u's list
-    int uIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->u);
+    int uIndex = binarySearchNodeIndex(adjacencyList, 0, numVertices, currEdge->u);
     NODE *uNode = getDA(adjacencyList, uIndex);
     NODE *vInsert = newNODE(currEdge->v, currEdge->u, currEdge->weight);
     insertDA(uNode->list, vInsert);
@@ -254,7 +244,7 @@ static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
     mainV->weight = currEdge->weight;
 
     //find node with value v adjacencyList. Add u to v's list
-    int vIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->v);
+    int vIndex = binarySearchNodeIndex(adjacencyList, 0, numVertices, currEdge->v);
     NODE *vNode = getDA(adjacencyList, vIndex);
     NODE *uInsert = newNODE(currEdge->u, currEdge->v, currEdge->weight);
     insertDA(vNode->list, uInsert);
@@ -270,6 +260,7 @@ static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
 static int binarySearchNodeIndex(DA *arr, int low, int high, int value) {
   int middle = low + (high - low)/2;
   NODE *curr = getDA(arr, middle);
+
   if (value == curr->value)
     return middle;
   else if (value < curr->value)
