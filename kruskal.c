@@ -20,7 +20,7 @@
 
 typedef struct NODE NODE;
 struct NODE {
-  int value;
+  int value, parent, weight;
   DA *list;
 };
 
@@ -31,11 +31,11 @@ struct EDGE {
 };
 
 /* MST functions */
-static void displayMST(DA *, DA *);
+static void displayMST(DA *);
 
 /* Node functions */
-static NODE *newNODE(int);
-static void displayNODE(NODE *, DA *);
+static NODE *newNODE(int, int, int);
+static void displayNODE(NODE *);
 static void addAdjacentNodes(DA *, DA *);
 static int binarySearchNodeIndex(DA *, int, int, int);
 
@@ -98,7 +98,7 @@ int main(int argc, char *argv[]) {
   /* Adding ordered list of vertices to be the 'spine' of the adjacency list */
   DA *adjacencyList = newDA(displayINTEGER);
   for (i = 0; i < numVertices; i++) {
-    NODE *n = newNODE(primativeVertexArr[i]);
+    NODE *n = newNODE(primativeVertexArr[i], 0, 0);
     insertDA(adjacencyList, n);
   }
 
@@ -115,7 +115,7 @@ int main(int argc, char *argv[]) {
 //    printf("\n");
   }
 
-//  displayMST(adjacencyList, MST);
+  displayMST(adjacencyList);
 
 /*
   // printing the adjacency lists below to know that they are correct, will ultimately get rid of this...
@@ -139,7 +139,7 @@ int main(int argc, char *argv[]) {
 /******************************************************************************/
 /***                           MST Functions                                ***/
 /******************************************************************************/
-static void displayMST(DA *adjacencyList, DA *MST) {
+static void displayMST(DA *adjacencyList) {
   if (sizeDA(adjacencyList) == 0) {   //FIXME: might just get rid of this...could throw off time complexity or be weird on an edge case
     printf("EMPTY\n");
     exit(0);
@@ -169,7 +169,7 @@ static void displayMST(DA *adjacencyList, DA *MST) {
         enqueue(nextQueue, getDA(adjList, i));
       }
 
-      displayNODE(dequeue(currQueue), MST);
+      displayNODE(dequeue(currQueue));
       printf("\n");
       currQueue = nextQueue;      //FIXME: might need to change this to a full-on copy
       isRoot = false;
@@ -184,7 +184,7 @@ static void displayMST(DA *adjacencyList, DA *MST) {
           enqueue(nextQueue, getDA(currAdjList, i));
         }
 
-        displayNODE(dequeue(currQueue), MST);
+        displayNODE(dequeue(currQueue));
         printf("\n");
         currQueue = nextQueue;
       }
@@ -195,16 +195,21 @@ static void displayMST(DA *adjacencyList, DA *MST) {
 /******************************************************************************/
 /***                           Node Functions                               ***/
 /******************************************************************************/
-static NODE *newNODE(int x) {
+static NODE *newNODE(int value, int parent, int weight) {
   NODE *n = malloc(sizeof(struct NODE));
-  n->value = x;
+  n->value = value;
+  n->parent = parent;
+  n->weight = weight;
   n->list = newDA(displayINTEGER);      //FIXME: might need to make a displayNODE function that goes here
 
   return n;
 }
 
-static void displayNODE(NODE *n, DA *edgeArr) {   // Note that the edge arr is the MST
-
+static void displayNODE(NODE *n) {   // Note that the edge arr is the MST
+  if (n->weight == 0)
+    printf(" %d", n->value);
+  else
+    printf(" %d(%d)%d", n->value, n->parent, n->weight);
 }
 
 static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
@@ -216,12 +221,12 @@ static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
     //find node with value u in adjacencyList. add v to u's list
     int uIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->u);
     NODE *uNode = getDA(adjacencyList, uIndex);
-    insertDA(uNode->list, newNODE(currEdge->v));
+    insertDA(uNode->list, newNODE(currEdge->v, currEdge->u, currEdge->weight));
 
     //find node with value v adjacencyList. Add u to v's list
     int vIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->v);
     NODE *vNode = getDA(adjacencyList, vIndex);
-    insertDA(vNode->list, newNODE(currEdge->u));
+    insertDA(vNode->list, newNODE(currEdge->u, currEdge->v, currEdge->weight));
 
   }
 }
