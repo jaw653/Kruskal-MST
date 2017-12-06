@@ -194,15 +194,18 @@ static void displayMST(DA *adjacencyList) {
           enqueue(currQueue, currNode);
           level = 0;
           isRoot = true;
-          printf("totalWeight is %d\n", totalWeight);
+          printf("total weight: %d\n", totalWeight/2);
           totalWeight = 0;
           printf("---\n");
           break;
         }
       }
     }
-
   }
+
+  printf("total weight: %d\n", totalWeight/2);
+  totalWeight = 0;
+  printf("---\n");
 }
 
 /******************************************************************************/
