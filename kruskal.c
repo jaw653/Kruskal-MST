@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
     }
 
   displayMST(adjacencyList);
-  printf("\n");
+  //printf("\n");
 
   // sort the MST edges based on vertices to get the smallest vertex at the beginning
   // create an adjacency list for the MST
@@ -155,10 +155,6 @@ static void displayMST(DA *adjacencyList) {
   enqueue(currQueue, getDA(adjacencyList, 0));
   bool isRoot = true;
   int mainIndex = 1;
-  // print the level
-  // print all nodes on the level. for each node, enqueue everything in its adjacencyList to nextLevel
-  // when that loop is done, set currLevel = nextLevel
-    // (note, re-intialize nextLevel at the beginning of the while loop so that it starts off empty)
 
   while (sizeQUEUE(currQueue) > 0) {
     QUEUE *nextQueue = newQUEUE(specialDisplayNODE);
@@ -220,57 +216,6 @@ static void displayMST(DA *adjacencyList) {
       }
     }
   }
-/*
-  while (sizeQUEUE(currQueue) > 0) {
-    int i;
-
-    printf("%d :", level++);
-
-    if (isRoot) {                       //FIXME: will need to make special print case for this as well
-      NODE *currNode = peekQUEUE(currQueue);
-      DA *adjList = currNode->list;
-
-      int sizeAdjList = sizeDA(adjList);
-      for (i = 0; i < sizeAdjList; i++) {
-        int indexOfMain = binarySearchNodeIndex(adjacencyList, 0, size, currNode->value);
-        NODE *mainNode = getDA(adjacencyList, indexOfMain);
-        enqueue(nextQueue, mainNode);
-        mainNode->visited = 1;
-
-      }
-
-      displayNODE(dequeue(currQueue));
-      printf("\n");
-
-      currQueue = nextQueue;      //FIXME: might need to change this to a full-on copy
-
-      isRoot = false;
-    }
-    else {
-      int size = sizeQUEUE(currQueue);
-      printf("size is: %d\n", size);
-      for (i = 0; i < size; i++) {
-        NODE *currNode = peekQUEUE(currQueue);
-        DA *currAdjList = currNode->list;
-
-        int sizeAdjList = sizeDA(currAdjList);
-        for (i = 0; i < sizeAdjList; i++) {
-          int indexOfMain = binarySearchNodeIndex(adjacencyList, 0, size, currNode->value);
-          NODE *mainNode = getDA(adjacencyList, indexOfMain);
-          if (mainNode->visited == 0) {
-            enqueue(nextQueue, mainNode);
-            mainNode->visited = 1;
-          }
-        }
-
-        displayNODE(dequeue(currQueue));
-        printf("\n");
-
-        currQueue = nextQueue;
-      }
-    }
-  }
-*/
 }
 
 /******************************************************************************/
