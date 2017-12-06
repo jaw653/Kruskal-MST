@@ -40,6 +40,7 @@ static NODE *newNODE(int, int, int);
 static void displayNODE(NODE *);
 static void addAdjacentNodes(DA *, DA *);
 static int binarySearchNodeIndex(DA *, int, int, int);
+static NODE *findMainVersion(DA *, NODE *);
 
 /* Edge functions */
 static EDGE *newEDGE(int, int, int, int, int);
@@ -98,11 +99,11 @@ int main(int argc, char *argv[]) {
   //quickSort(MST, 0, sizeDA(MST), 'v');    // FIXME: this might be completely unneeded
 
   /* Adding ordered list of vertices to be the 'spine' of the adjacency list */
-  DA *adjacencyList = newDA(displayINTEGER);
+  DA *adjacencyList = newDA(displayINTEGER);    //FIXME: this might need to be displayNODE
   for (i = 0; i < numVertices; i++) {
-    NODE *n = newNODE(primativeVertexArr[i], 0, 0);
-    insertDA(adjacencyList, n);
-  }
+     NODE *n = newNODE(primativeVertexArr[i], 0, 0);
+     insertDA(adjacencyList, n);
+   }
 
   // Adding adjacency lists to each 'spine' value
   addAdjacentNodes(adjacencyList, MST);
@@ -117,18 +118,18 @@ int main(int argc, char *argv[]) {
 //    printf("\n");
   }
 
-  displayMST(adjacencyList);
+    // printing the adjacency lists below to know that they are correct, will ultimately get rid of this...
+    printf("printing adjacency lists...\n");
+    for (i = 0; i < sizeDA(adjacencyList); i++) {
+      NODE *curr = getDA(adjacencyList, i);
+      printf("%d->", curr->value);
+      displayDA(stdout, curr->list);
+      printf("\n");
+    }
 
-/*
-  // printing the adjacency lists below to know that they are correct, will ultimately get rid of this...
-  printf("printing adjacency lists...\n");
-  for (i = 0; i < sizeDA(adjacencyList); i++) {
-    NODE *curr = getDA(adjacencyList, i);
-    printf("%d->", curr->value);
-    displayDA(stdout, curr->list);
-    printf("\n");
-  }
-*/
+  displayMST(adjacencyList);
+  printf("\n");
+
   // sort the MST edges based on vertices to get the smallest vertex at the beginning
   // create an adjacency list for the MST
   // walk the sorted MST. If the edge is not visited, run BFS on it
@@ -148,13 +149,78 @@ static void displayMST(DA *adjacencyList) {
   }
 
   QUEUE *currQueue = newQUEUE(specialDisplayNODE);
-  QUEUE *nextQueue = newQUEUE(specialDisplayNODE);
 
   int size = sizeDA(adjacencyList);
   int level = 0;
   enqueue(currQueue, getDA(adjacencyList, 0));
   bool isRoot = true;
+  int mainIndex = 1;
+  // print the level
+  // print all nodes on the level. for each node, enqueue everything in its adjacencyList to nextLevel
+  // when that loop is done, set currLevel = nextLevel
+    // (note, re-intialize nextLevel at the beginning of the while loop so that it starts off empty)
 
+  while (sizeQUEUE(currQueue) > 0) {
+    QUEUE *nextQueue = newQUEUE(specialDisplayNODE);
+
+    printf("%d :", level++);
+
+    if (isRoot) {
+      NODE *currNode = dequeue(currQueue);
+      displayNODE(currNode);
+      currNode = findMainVersion(adjacencyList, currNode);
+      currNode->visited = 1;
+      // enqueue every node currNode's adjacencyList to nextQueue
+      // in this case, it's only got one
+      int sizeAdjList = sizeDA(currNode->list);
+      int i;
+      for (i = 0; i < sizeAdjList; i++) {
+        NODE *currAdjListMem = getDA(currNode->list, i);
+        if (findMainVersion(adjacencyList, currAdjListMem)->visited == 0) {
+          enqueue(nextQueue, currAdjListMem);
+        }
+      }
+
+      currQueue = nextQueue;
+
+      isRoot = false;
+      printf("\n");
+    }
+    else {
+      int i;
+      int sizeCurr = sizeQUEUE(currQueue);
+      for (i = 0; i < sizeCurr; i++) {
+        NODE *currNode = dequeue(currQueue);
+        displayNODE(currNode);
+        currNode = findMainVersion(adjacencyList, currNode);
+        currNode->visited = 1;
+
+        int sizeAdjList = sizeDA(currNode->list);
+        int j;
+        for (j = 0; j < sizeAdjList; j++) {
+          NODE *currAdjListMem = getDA(currNode->list, j);
+          if (findMainVersion(adjacencyList, currAdjListMem)->visited == 0) {
+            enqueue(nextQueue, currAdjListMem);
+          }
+        }
+      }
+
+      printf("\n");
+      currQueue = nextQueue;
+
+      if (sizeQUEUE(currQueue) == 0) {
+        int i;
+        for (i = mainIndex; i < size; i++) {
+          NODE *currNode = getDA(adjacencyList, i);
+          if (currNode->visited == 0) {
+            enqueue(currQueue, currNode);
+            break;
+          }
+        }
+      }
+    }
+  }
+/*
   while (sizeQUEUE(currQueue) > 0) {
     int i;
 
@@ -167,9 +233,9 @@ static void displayMST(DA *adjacencyList) {
       int sizeAdjList = sizeDA(adjList);
       for (i = 0; i < sizeAdjList; i++) {
         int indexOfMain = binarySearchNodeIndex(adjacencyList, 0, size, currNode->value);
-        NODE *main = getDA(adjacencyList, indexOfMain);
-        enqueue(nextQueue, main);
-        main->visited = 1;
+        NODE *mainNode = getDA(adjacencyList, indexOfMain);
+        enqueue(nextQueue, mainNode);
+        mainNode->visited = 1;
 
       }
 
@@ -182,6 +248,7 @@ static void displayMST(DA *adjacencyList) {
     }
     else {
       int size = sizeQUEUE(currQueue);
+      printf("size is: %d\n", size);
       for (i = 0; i < size; i++) {
         NODE *currNode = peekQUEUE(currQueue);
         DA *currAdjList = currNode->list;
@@ -189,10 +256,10 @@ static void displayMST(DA *adjacencyList) {
         int sizeAdjList = sizeDA(currAdjList);
         for (i = 0; i < sizeAdjList; i++) {
           int indexOfMain = binarySearchNodeIndex(adjacencyList, 0, size, currNode->value);
-          NODE *main = getDA(adjacencyList, indexOfMain);
-          if (main->visited == 0) {
-            enqueue(nextQueue, main);
-            main->visited = 1;
+          NODE *mainNode = getDA(adjacencyList, indexOfMain);
+          if (mainNode->visited == 0) {
+            enqueue(nextQueue, mainNode);
+            mainNode->visited = 1;
           }
         }
 
@@ -203,6 +270,7 @@ static void displayMST(DA *adjacencyList) {
       }
     }
   }
+*/
 }
 
 /******************************************************************************/
@@ -243,12 +311,23 @@ static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
     //find node with value u in adjacencyList. add v to u's list
     int uIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->u);
     NODE *uNode = getDA(adjacencyList, uIndex);
-    insertDA(uNode->list, newNODE(currEdge->v, currEdge->u, currEdge->weight));
+    NODE *vInsert = newNODE(currEdge->v, currEdge->u, currEdge->weight);
+    insertDA(uNode->list, vInsert);
+    //Setting the main version's attributes
+    NODE *mainV = findMainVersion(adjacencyList, vInsert);
+    mainV->parent = currEdge->u;
+    mainV->weight = currEdge->weight;
 
     //find node with value v adjacencyList. Add u to v's list
     int vIndex = binarySearchNodeIndex(adjacencyList, 0, size, currEdge->v);
     NODE *vNode = getDA(adjacencyList, vIndex);
-    insertDA(vNode->list, newNODE(currEdge->u, currEdge->v, currEdge->weight));
+    NODE *uInsert = newNODE(currEdge->u, currEdge->v, currEdge->weight);
+    insertDA(vNode->list, uInsert);
+
+    //Setting the main version's attributes
+    NODE *mainU = findMainVersion(adjacencyList, uInsert);
+    mainU->parent = currEdge->v;
+    mainU->weight = currEdge->weight;
 
   }
 }
@@ -262,6 +341,15 @@ static int binarySearchNodeIndex(DA *arr, int low, int high, int value) {
     return binarySearchNodeIndex(arr, low, middle-1, value);
   else
     return binarySearchNodeIndex(arr, middle+1, high, value);
+}
+
+static NODE *findMainVersion(DA *adjList, NODE *n) {
+  int size = sizeDA(adjList);
+  int adjListIndex = binarySearchNodeIndex(adjList, 0, size, n->value);
+
+  NODE *finalNode = getDA(adjList, adjListIndex);
+
+  return finalNode;
 }
 
 
@@ -405,8 +493,14 @@ static int partition(DA *arr, int low, int high, char e) {
         swap(arr, i, leftWall);
       }
     }
-    else {
+    else if (e == 'u') {
       if (edge_i->u < pivot->u) {
+        leftWall += 1;
+        swap(arr, i, leftWall);
+      }
+    }
+    else if (e == 'v') {
+      if (edge_i->v < pivot->v) {
         leftWall += 1;
         swap(arr, i, leftWall);
       }
@@ -425,7 +519,12 @@ static void quickSort(DA *arr, int low, int high, char e) {
       quickSort(arr, low, pivotLocation-1, 'e');
       quickSort(arr, pivotLocation+1, high, 'e');
     }
-    else {
+    else if (e == 'u'){
+      int pivotLocation = partition(arr, low, high, 'u');
+      quickSort(arr, low, pivotLocation-1, 'u');
+      quickSort(arr, pivotLocation+1, high, 'u');
+    }
+    else if (e == 'v') {
       int pivotLocation = partition(arr, low, high, 'v');
       quickSort(arr, low, pivotLocation-1, 'v');
       quickSort(arr, pivotLocation+1, high, 'v');
