@@ -30,14 +30,12 @@ struct EDGE {
   int u_index, v_index;
 };
 
-static void specialDisplayNODE(FILE *, void *);
-
 /* MST functions */
 static void displayMST(DA *);
 
 /* Node functions */
 static NODE *newNODE(int, int, int);
-static void displayNODE(NODE *);
+static void displayNODE(NODE *, int);
 static void addAdjacentNodes(DA *, DA *);
 static int binarySearchNodeIndex(DA *, int, int, int);
 static NODE *findMainVersion(DA *, NODE *);
@@ -148,7 +146,7 @@ static void displayMST(DA *adjacencyList) {
     exit(0);
   }
 
-  QUEUE *currQueue = newQUEUE(specialDisplayNODE);
+  QUEUE *currQueue = newQUEUE(NULL);
 
   int size = sizeDA(adjacencyList);
   int level = 0;
@@ -157,13 +155,13 @@ static void displayMST(DA *adjacencyList) {
   int mainIndex = 1;
 
   while (sizeQUEUE(currQueue) > 0) {
-    QUEUE *nextQueue = newQUEUE(specialDisplayNODE);
+    QUEUE *nextQueue = newQUEUE(NULL);
 
     printf("%d :", level++);
 
     if (isRoot) {
       NODE *currNode = dequeue(currQueue);
-      displayNODE(currNode);
+      displayNODE(currNode, 1);
       currNode = findMainVersion(adjacencyList, currNode);
       currNode->visited = 1;
       // enqueue every node currNode's adjacencyList to nextQueue
@@ -187,7 +185,7 @@ static void displayMST(DA *adjacencyList) {
       int sizeCurr = sizeQUEUE(currQueue);
       for (i = 0; i < sizeCurr; i++) {
         NODE *currNode = dequeue(currQueue);
-        displayNODE(currNode);
+        displayNODE(currNode, 0);
         currNode = findMainVersion(adjacencyList, currNode);
         currNode->visited = 1;
 
@@ -232,16 +230,8 @@ static NODE *newNODE(int value, int parent, int weight) {
   return n;
 }
 
-static void displayNODE(NODE *n) {   // Note that the edge arr is the MST
-  if (n->weight == 0)
-    printf(" %d", n->value);
-  else
-    printf(" %d(%d)%d", n->value, n->parent, n->weight);
-}
-
-static void specialDisplayNODE(FILE *fp, void *node) {
-  NODE *n = node;
-  if (n->weight == 0)
+static void displayNODE(NODE *n, int root) {   // Note that the edge arr is the MST
+  if (root == 1)
     printf(" %d", n->value);
   else
     printf(" %d(%d)%d", n->value, n->parent, n->weight);
