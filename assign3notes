@@ -13,4 +13,5 @@ questions:
 
 ideas to make program faster:
 -----------------------------
+-currently searching for the main version of every vertex node to see if visited in the display function...might need to set visited for every node so that I can access the visited info in constant time rather than potentially linear time
 -find the min and max while reading in the graph
