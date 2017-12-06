@@ -137,7 +137,7 @@ static void displayMST(DA *adjacencyList) {
   while (sizeQUEUE(currQueue) > 0) {
     QUEUE *nextQueue = newQUEUE(NULL);
 
-    printf("%d :", level++);
+    printf("%d:", level++);
 
 
     if (isRoot) {
@@ -196,7 +196,7 @@ static void displayMST(DA *adjacencyList) {
           isRoot = true;
           printf("total weight: %d\n", totalWeight/2);
           totalWeight = 0;
-          printf("---\n");
+          printf("----\n");
           break;
         }
       }
@@ -205,7 +205,7 @@ static void displayMST(DA *adjacencyList) {
 
   printf("total weight: %d\n", totalWeight/2);
   totalWeight = 0;
-  printf("---\n");
+  printf("----\n");
 }
 
 /******************************************************************************/
