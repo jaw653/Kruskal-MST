@@ -20,7 +20,7 @@
 
 typedef struct NODE NODE;
 struct NODE {
-  int value, parent, weight;
+  int value, parent, weight, visited;
   DA *list;
 };
 
@@ -29,6 +29,8 @@ struct EDGE {
   int u, v, weight;
   int u_index, v_index;
 };
+
+static void specialDisplayNODE(FILE *, void *);
 
 /* MST functions */
 static void displayMST(DA *);
@@ -145,33 +147,37 @@ static void displayMST(DA *adjacencyList) {
     exit(0);
   }
 
-  QUEUE *currQueue = newQUEUE(NULL);
-  QUEUE *nextQueue = newQUEUE(NULL);
+  QUEUE *currQueue = newQUEUE(specialDisplayNODE);
+  QUEUE *nextQueue = newQUEUE(specialDisplayNODE);
 
+  int size = sizeDA(adjacencyList);
   int level = 0;
   enqueue(currQueue, getDA(adjacencyList, 0));
   bool isRoot = true;
 
   while (sizeQUEUE(currQueue) > 0) {
     int i;
-    //print the level number and colon
-    //then print the level, all the while adding the node to be printed to next level
-    //at the end of the print loop, set currQueue equal to nextQueue
-
 
     printf("%d :", level++);
 
     if (isRoot) {                       //FIXME: will need to make special print case for this as well
       NODE *currNode = peekQUEUE(currQueue);
       DA *adjList = currNode->list;
+
       int sizeAdjList = sizeDA(adjList);
       for (i = 0; i < sizeAdjList; i++) {
-        enqueue(nextQueue, getDA(adjList, i));
+        int indexOfMain = binarySearchNodeIndex(adjacencyList, 0, size, currNode->value);
+        NODE *main = getDA(adjacencyList, indexOfMain);
+        enqueue(nextQueue, main);
+        main->visited = 1;
+
       }
 
       displayNODE(dequeue(currQueue));
       printf("\n");
+
       currQueue = nextQueue;      //FIXME: might need to change this to a full-on copy
+
       isRoot = false;
     }
     else {
@@ -179,13 +185,20 @@ static void displayMST(DA *adjacencyList) {
       for (i = 0; i < size; i++) {
         NODE *currNode = peekQUEUE(currQueue);
         DA *currAdjList = currNode->list;
+
         int sizeAdjList = sizeDA(currAdjList);
         for (i = 0; i < sizeAdjList; i++) {
-          enqueue(nextQueue, getDA(currAdjList, i));
+          int indexOfMain = binarySearchNodeIndex(adjacencyList, 0, size, currNode->value);
+          NODE *main = getDA(adjacencyList, indexOfMain);
+          if (main->visited == 0) {
+            enqueue(nextQueue, main);
+            main->visited = 1;
+          }
         }
 
         displayNODE(dequeue(currQueue));
         printf("\n");
+
         currQueue = nextQueue;
       }
     }
@@ -200,12 +213,21 @@ static NODE *newNODE(int value, int parent, int weight) {
   n->value = value;
   n->parent = parent;
   n->weight = weight;
+  n->visited = 0;
   n->list = newDA(displayINTEGER);      //FIXME: might need to make a displayNODE function that goes here
 
   return n;
 }
 
 static void displayNODE(NODE *n) {   // Note that the edge arr is the MST
+  if (n->weight == 0)
+    printf(" %d", n->value);
+  else
+    printf(" %d(%d)%d", n->value, n->parent, n->weight);
+}
+
+static void specialDisplayNODE(FILE *fp, void *node) {
+  NODE *n = node;
   if (n->weight == 0)
     printf(" %d", n->value);
   else
