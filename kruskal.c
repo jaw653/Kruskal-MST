@@ -36,6 +36,7 @@ static void displayMST(DA *);
 /* Node functions */
 static NODE *newNODE(int, int, int);
 static void displayNODE(NODE *, int);
+static void specialDisplayNODE(FILE *, void *);
 static void addAdjacentNodes(DA *, DA *);
 static int binarySearchNodeIndex(DA *, int, int, int);
 static NODE *findMainVersion(DA *, NODE *);
@@ -52,8 +53,10 @@ static int retrieveVertexIndex(int *, int, int, int);
 
 /* QuickSort functions */
 static void swap(DA *, int, int);
+static void swapNodes(DA *, int, int);
 static int partition(DA *, int, int, char);
 static void quickSort(DA *, int, int, char);
+static void sortQueue(QUEUE *);
 
 /* Kruskal functions */
 static DA *kruskal(DA *, int *, int);
@@ -101,7 +104,12 @@ int main(int argc, char *argv[]) {
   for (i = 0; i < numVertices; i++) {
     NODE *n = getDA(adjacencyList, i);
     DA *currDA = n->list;
-    quickSort(currDA, 0, sizeDA(currDA), 'v');
+    quickSort(currDA, 0, sizeDA(currDA), 'u');
+/*
+    printf("%d->", n->value);
+    displayDA(stdout, n->list);
+    printf("\n");
+*/
   }
 
   displayMST(adjacencyList);
@@ -125,7 +133,7 @@ static void displayMST(DA *adjacencyList) {
     exit(0);
   }
 
-  QUEUE *currQueue = newQUEUE(NULL);
+  QUEUE *currQueue = newQUEUE(specialDisplayNODE);
 
   int size = sizeDA(adjacencyList);
   int level = 0;
@@ -133,17 +141,39 @@ static void displayMST(DA *adjacencyList) {
   bool isRoot = true;
   int mainIndex = 1;
   int totalWeight = 0;
+/*
+printf("overall adjlist is: ");
+displayDA(stdout, adjacencyList);
+printf("\n");
 
+int x;
+for (x = 0; x < sizeDA(adjacencyList); x++) {
+  DA *curr = getDA(adjacencyList, i)->list;
+  displayDA(stdout, curr);
+}
+*/
   while (sizeQUEUE(currQueue) > 0) {
-    QUEUE *nextQueue = newQUEUE(NULL);
+    QUEUE *nextQueue = newQUEUE(specialDisplayNODE);
 
     printf("%d:", level++);
 
+    printf("\nunsorted queue is: ");
+    displayQUEUE(stdout, currQueue);
+    printf("\n");
+    sortQueue(currQueue);
+    printf("\ncurrQueue is: ");
+    displayQUEUE(stdout, currQueue);
+    printf("\n");
 
     if (isRoot) {
       NODE *currNode = dequeue(currQueue);
-      totalWeight += currNode->weight;
+      //totalWeight += currNode->weight;
       displayNODE(currNode, 1);
+/*
+      printf("adjacencylist of currnode (%d) is: ", currNode->value);
+      displayDA(stdout, currNode->list);
+      printf("\n");
+*/
       currNode = findMainVersion(adjacencyList, currNode);
       currNode->visited = 1;
       // enqueue every node currNode's adjacencyList to nextQueue
@@ -167,6 +197,11 @@ static void displayMST(DA *adjacencyList) {
       int sizeCurr = sizeQUEUE(currQueue);
       for (i = 0; i < sizeCurr; i++) {
         NODE *currNode = dequeue(currQueue);
+/*
+        printf("adjacencylist of currnode (%d) is: ", currNode->value);
+        displayDA(stdout, currNode->list);
+        printf("\n");
+*/
         totalWeight += currNode->weight;
         displayNODE(currNode, 0);
         currNode = findMainVersion(adjacencyList, currNode);
@@ -194,16 +229,17 @@ static void displayMST(DA *adjacencyList) {
           enqueue(currQueue, currNode);
           level = 0;
           isRoot = true;
-          printf("total weight: %d\n", totalWeight/2);
+          printf("total weight: %d\n", totalWeight);
           totalWeight = 0;
           printf("----\n");
           break;
         }
       }
+      mainIndex = i;
     }
   }
 
-  printf("total weight: %d\n", totalWeight/2);
+  printf("total weight: %d\n", totalWeight);
   totalWeight = 0;
   printf("----\n");
 }
@@ -229,6 +265,10 @@ static void displayNODE(NODE *n, int root) {   // Note that the edge arr is the 
     printf(" %d(%d)%d", n->value, n->parent, n->weight);
 }
 
+static void specialDisplayNODE(FILE *fp, void *v) {
+  NODE *n = v;
+  fprintf(fp, " %d(%d)%d", n->value, n->parent, n->weight);
+}
 static void addAdjacentNodes(DA *adjacencyList, DA *edgeArr) {
   //add currEdge adjacency info to adjacencyList
   int i;
@@ -408,14 +448,50 @@ static void swap(DA *arr, int index1, int index2) {
   edge2->v_index = temp->v_index;
 }
 
+static void swapNodes(DA *arr, int index1, int index2) {
+  NODE *node1 = getDA(arr, index1);
+  NODE *node2 = getDA(arr, index2);
+  printf("index1 is: %d and index2 is: %d\n", index1, index2);
+printf("swapping %d with %d\n", node1->value, node2->value);
+//  setDA(arr, index1, node2);
+//  setDA(arr, index2, node1);
+  NODE *tmp = newNODE(node1->value, node1->parent, node1->weight);
+  tmp->list = node1->list;
+
+  node1->value = node2->value;
+  node1->parent = node2->parent;
+  node1->weight = node2->weight;
+  node1->list = node2->list;
+
+  node2->value = tmp->value;
+  node2->parent = tmp->parent;
+  node2->weight = tmp->weight;
+  node2->list = tmp->list;
+
+}
+
 static int partition(DA *arr, int low, int high, char e) {
-  EDGE *pivot = getDA(arr, low);
+  printf("partition\n");
+  EDGE *pivot;
+  NODE *pivotNode;
+  if (e != 'n')
+    pivot = getDA(arr, low);
+  else
+    pivotNode = getDA(arr, low);
+
   int leftWall = low;
 
   int i;
   for (i = low + 1; i < high; i++) {
     // if a[i] < pivot
-    EDGE *edge_i = getDA(arr, i);
+    EDGE *edge_i;
+    NODE *node_i;
+
+    if (e != 'n')
+      edge_i = getDA(arr, i);
+    else
+      node_i = getDA(arr, i);
+
     if (e == 'e') {
       if (edge_i->weight < pivot->weight) {
         leftWall += 1;
@@ -434,12 +510,25 @@ static int partition(DA *arr, int low, int high, char e) {
         swap(arr, i, leftWall);
       }
     }
+    else if (e == 'n') {
+      if (node_i->value < pivotNode->value) {
+        leftWall += 1;
+        printf("SWAP\n");
+        swapNodes(arr, i, leftWall);
+      }
+    }
   }
 
-  swap(arr, low, leftWall);
+  if (e != 'n')
+    swap(arr, low, leftWall);
+  else {
+    printf("SWAP2\n");
+    swapNodes(arr, low, leftWall);
+  }
 
   return ++leftWall;
 }
+
 
 static void quickSort(DA *arr, int low, int high, char e) {
   if (low < high) {
@@ -458,10 +547,31 @@ static void quickSort(DA *arr, int low, int high, char e) {
       quickSort(arr, low, pivotLocation-1, 'v');
       quickSort(arr, pivotLocation+1, high, 'v');
     }
+    else if (e == 'n') {
+      int pivotLocation = partition(arr, low, high, 'n');
+      quickSort(arr, low, pivotLocation-1, 'n');
+      quickSort(arr, pivotLocation+1, high, 'n');
+    }
   }
 }
 
+static void sortQueue(QUEUE *q) {
+  DA *tmp = newDA(specialDisplayNODE);
+  int size = sizeQUEUE(q);
+  int i;
+  for (i = 0; i < size; i++)
+    insertDA(tmp, dequeue(q));
+printf("\nunsorted array is: ");
+displayDA(stdout, tmp);
+printf("\n");
+  quickSort(tmp, 0, size, 'n');
+printf("sorted array is: ");
+displayDA(stdout, tmp);
+printf("\n");
 
+  for (i = 0; i < size; i++)
+    enqueue(q, getDA(tmp, i));
+}
 /******************************************************************************/
 /***                           Kruskal Functions                            ***/
 /******************************************************************************/
