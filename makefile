@@ -13,7 +13,45 @@ kruskal: $(OBJECT_BUNDLE)
 	gcc $(OPTS) $(OBJECT_BUNDLE) -o ./kruskal
 
 test: kruskal
-	#pass
+	kruskal assign3Tests/g0 >> outputs/g0.jake
+	diff assign3Tests/g0.expected outputs/g0.jake
+
+	kruskal assign3Tests/g-0-0 >> outputs/g-0-0.jake
+	diff assign3Tests/g-0-0.expected outputs/g-0-0.jake
+
+	kruskal assign3Tests/g-0-1 >> outputs/g-0-1.jake
+	diff assign3Tests/g-0-1.expected outputs/g-0-1.jake
+
+	kruskal assign3Tests/g-0-2 >> outputs/g-0-2.jake
+	diff assign3Tests/g-0-2.expected outputs/g-0-2.jake
+
+	kruskal assign3Tests/g-0-3 >> outputs/g-0-3.jake
+	diff assign3Tests/g-0-3.expected outputs/g-0-3.jake
+
+	kruskal assign3Tests/g-0-4 >> outputs/g-0-4.jake
+	diff assign3Tests/g-0-4.expected outputs/g-0-4.jake
+
+	kruskal assign3Tests/g-0-5 >> outputs/g-0-5.jake
+	diff assign3Tests/g-0-5.expected outputs/g-0-5.jake
+
+	kruskal assign3Tests/g-0-6 >> outputs/g-0-6.jake
+	diff assign3Tests/g-0-6.expected outputs/g-0-6.jake
+
+	kruskal assign3Tests/g-0-7 >> outputs/g-0-7.jake
+	diff assign3Tests/g-0-7.expected outputs/g-0-7.jake
+
+	kruskal assign3Tests/g-0-8 >> outputs/g-0-8.jake
+	diff assign3Tests/g-0-8.expected outputs/g-0-8.jake
+
+	kruskal assign3Tests/g-0-9 >> outputs/g-0-9.jake
+	diff assign3Tests/g-0-9.expected outputs/g-0-9.jake
+
+	kruskal assign3Tests/g-0-10 >> outputs/g-0-10.jake
+	diff assign3Tests/g-0-10.expected outputs/g-0-10.jake
+
+
+
+	rm outputs/*.jake
 
 kruskal.o: kruskal.c
 	gcc $(OPTS) kruskal.c -c
