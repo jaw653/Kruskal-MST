@@ -1,5 +1,6 @@
 To-Do:
 ------
+-add space back in (?) before submitting
 -currently working on displaying. Need to write displayNODE() and then test displayMST()...then just test and stuff...
 
 -make a function, or add on functionality to count the total weight of the graph
