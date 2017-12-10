@@ -42,7 +42,7 @@ static int binarySearchNodeIndex(DA *, int, int, int);
 static NODE *findMainVersion(DA *, NODE *);
 
 /* Edge functions */
-static EDGE *newEDGE(int, int, int, int, int);
+static EDGE *newEDGE(int, int, int);
 static void displayEDGE(FILE *, void *);
 
 /* Utility Functions */
@@ -87,9 +87,9 @@ int main(int argc, char *argv[]) {
   int *primativeVertexArr = sortVertices(vertexArr, numVertices);
 
   fclose(graphFile);
-printf("flag0\n");
+
   DA *MST = kruskal(edgeArr, primativeVertexArr, numVertices);
-printf("flag\n");
+
   /* Adding ordered list of vertices to be the 'spine' of the adjacency list */
   DA *adjacencyList = newDA(displayINTEGER);    //FIXME: this might need to be displayNODE
   for (i = 0; i < numVertices; i++) {
@@ -104,7 +104,7 @@ printf("flag\n");
   for (i = 0; i < numVertices; i++) {
     NODE *n = getDA(adjacencyList, i);
     DA *currDA = n->list;
-    quickSort(currDA, 0, sizeDA(currDA)-1, 'u');
+    quickSort(currDA, 0, sizeDA(currDA), 'u');
 /*
     printf("%d->", n->value);
     displayDA(stdout, n->list);
@@ -334,7 +334,7 @@ static NODE *findMainVersion(DA *adjList, NODE *n) {
 /******************************************************************************/
 /***                           Edge Functions                               ***/
 /******************************************************************************/
-static EDGE *newEDGE(int u, int v, int weight, int index1, int index2) {
+static EDGE *newEDGE(int u, int v, int weight) {
   EDGE *e = malloc(sizeof(struct EDGE));
   e->u = u;
   e->v = v;
@@ -369,7 +369,7 @@ static void readInFile(FILE *fp, DA *edgeArr, DA *vertexArr, RBT *tree) {
       str = readToken(fp);
     }
 
-    EDGE *edgeToInsert = newEDGE(u, v, weight, vertexIndex, vertexIndex+1);
+    EDGE *edgeToInsert = newEDGE(u, v, weight);
     vertexIndex += 2;
 
 
@@ -426,27 +426,28 @@ static int retrieveVertexIndex(int *arr, int low, int high, int value) {
 /***                           QuickSort Functions                          ***/
 /******************************************************************************/
 static void swap(DA *arr, int index1, int index2) {
+
   EDGE *edge1 = getDA(arr, index1);
   EDGE *edge2 = getDA(arr, index2);
-
+/*
   EDGE *tmp = edge1;
   edge1 = edge2;
   edge2 = tmp;
-/*
+*/
   int u1 = edge1->u;
   int v1 = edge1->v;
   int weight1 = edge1->weight;
-  int udex1 = edge1->u_index;
-  int vdex1 = edge1->v_index;
+//  int udex1 = edge1->u_index;
+//  int vdex1 = edge1->v_index;
 
   int u2 = edge2->u;
   int v2 = edge2->v;
   int weight2 = edge2->weight;
   int udex2 = edge2->u_index;
   int vdex2 = edge2->v_index;
-printf("flag\n");
-  EDGE *temp = newEDGE(u1, v1, weight1, udex1, vdex1);
-printf("flag2\n");
+
+  EDGE *temp = newEDGE(u1, v1, weight1);
+
   edge1->u = u2;
   edge1->v = v2;
   edge1->weight = weight2;
@@ -458,7 +459,7 @@ printf("flag2\n");
   edge2->weight = temp->weight;
   edge2->u_index = temp->u_index;
   edge2->v_index = temp->v_index;
-*/
+
 }
 
 static void swapNodes(DA *arr, int index1, int index2) {
@@ -568,6 +569,7 @@ static int partition(DA *arr, int low, int high, char e) {
 
     if (e == 'e') {
       if (edge_i->weight < pivot->weight) {
+
         leftWall += 1;
         swap(arr, i, leftWall);
       }
@@ -606,10 +608,9 @@ static int partition(DA *arr, int low, int high, char e) {
 static void quickSort(DA *arr, int low, int high, char e) {
   if (low < high) {
     if (e == 'e') {
-      printf("low is: %d\n", low);
       int pivotLocation = partition(arr, low, high, 'e');
       quickSort(arr, low, pivotLocation-1, 'e');
-      quickSort(arr, pivotLocation+1, high, 'e');
+      quickSort(arr, pivotLocation, high, 'e');
     }
     else if (e == 'u'){
       int pivotLocation = partition(arr, low, high, 'u');
@@ -638,7 +639,7 @@ static void sortQueue(QUEUE *q) {
 //printf("\nunsorted array is: ");
 //displayDA(stdout, tmp);
 //printf("\n");
-  quickSort(tmp, 0, size-1, 'n');
+  quickSort(tmp, 0, size, 'n');
 //printf("sorted array is: ");
 //displayDA(stdout, tmp);
 //printf("\n");
@@ -662,10 +663,8 @@ static DA *kruskal(DA *edgeArr, int *vertexArr, int numVertices) {
   }
 
   // sort the edges by weight
-  quickSort(edgeArr, 0, numEdges-1, 'e');
-printf("array sorted by edges is: ");
-displayDA(stdout, edgeArr);
-printf("\n");
+  quickSort(edgeArr, 0, numEdges, 'e');
+
   for (i = 0; i < numEdges; i++) {
     EDGE *currEdge = getDA(edgeArr, i);
     int Udex = retrieveVertexIndex(vertexArr, 0, numVertices, currEdge->u);
