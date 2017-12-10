@@ -1,5 +1,6 @@
 To-Do:
 ------
+-if failing on large cases, may have to do with quicksort. try removing the +1 in pivotlocation during recursion
 -add space back in (?) before submitting
 -currently working on displaying. Need to write displayNODE() and then test displayMST()...then just test and stuff...
 
