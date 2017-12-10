@@ -50,6 +50,7 @@ static void readInFile(FILE *, DA *, DA *, RBT *);
 static int intCompare(const void *, const void *);
 static int *sortVertices(DA *, int);
 static int retrieveVertexIndex(int *, int, int, int);
+static int minVertex(EDGE *);
 
 /* QuickSort functions */
 static void swap(DA *, int, int);
@@ -133,16 +134,6 @@ static void displayMST(DA *adjacencyList) {
     exit(0);
   }
 
-  printf("overall adjacencyList is: ");
-  displayDA(stdout, adjacencyList);
-  printf("\n");
-  int x;
-  for (x = 0; x < sizeDA(adjacencyList); x++) {
-    NODE *curr = getDA(adjacencyList, x);
-    printf("%d->", curr->value);
-    displayDA(stdout, curr->list);
-    printf("\n");
-  }
   QUEUE *currQueue = newQUEUE(specialDisplayNODE);
 
   int size = sizeDA(adjacencyList);
@@ -192,6 +183,11 @@ for (x = 0; x < sizeDA(adjacencyList); x++) {
       for (i = 0; i < sizeAdjList; i++) {
         NODE *currAdjListMem = getDA(currNode->list, i);
         if (findMainVersion(adjacencyList, currAdjListMem)->visited == 0) {
+/*
+          printf("\nadding ");
+          displayNODE(currAdjListMem, 0);
+          printf(" to %d's adj list\n", currNode->value);
+*/
           enqueue(nextQueue, currAdjListMem);
         }
       }
@@ -206,11 +202,7 @@ for (x = 0; x < sizeDA(adjacencyList); x++) {
       int sizeCurr = sizeQUEUE(currQueue);
       for (i = 0; i < sizeCurr; i++) {
         NODE *currNode = dequeue(currQueue);
-/*
-        printf("adjacencylist of currnode (%d) is: ", currNode->value);
-        displayDA(stdout, currNode->list);
-        printf("\n");
-*/
+
         totalWeight += currNode->weight;
         displayNODE(currNode, 0);
         currNode = findMainVersion(adjacencyList, currNode);
@@ -262,7 +254,7 @@ static NODE *newNODE(int value, int parent, int weight) {
   n->parent = parent;
   n->weight = weight;
   n->visited = 0;
-  n->list = newDA(displayINTEGER);      //FIXME: might need to make a displayNODE function that goes here
+  n->list = newDA(specialDisplayNODE);      //FIXME: might need to make a displayNODE function that goes here
 
   return n;
 }
@@ -421,7 +413,12 @@ static int retrieveVertexIndex(int *arr, int low, int high, int value) {
     return retrieveVertexIndex(arr, middle+1, high, value);
 }
 
-
+static int minVertex(EDGE *e) {
+  if (e->u < e->v)
+    return e->u;
+  else
+    return e->v;
+}
 /******************************************************************************/
 /***                           QuickSort Functions                          ***/
 /******************************************************************************/
@@ -573,6 +570,17 @@ static int partition(DA *arr, int low, int high, char e) {
         leftWall += 1;
         swap(arr, i, leftWall);
       }
+      else if (edge_i->weight == pivot->weight) {
+
+        if (edge_i->u < pivot->u) {
+          leftWall += 1;
+          swap(arr, i, leftWall);
+        }
+        else if (edge_i->v < pivot->v) {
+          leftWall += 1;
+          swap(arr, i, leftWall);
+        }
+      }
     }
     else if (e == 'u') {
       if (edge_i->u < pivot->u) {
@@ -592,6 +600,12 @@ static int partition(DA *arr, int low, int high, char e) {
         swapNodes(arr, i, leftWall);
       }
     }
+    else if (e == 'm') {
+      if (minVertex(edge_i) < minVertex(pivot)) {
+        leftWall += 1;
+        swapNodes(arr, i, leftWall);
+      }
+    }
   }
 
   if (e != 'n')
@@ -607,26 +621,9 @@ static int partition(DA *arr, int low, int high, char e) {
 
 static void quickSort(DA *arr, int low, int high, char e) {
   if (low < high) {
-    if (e == 'e') {
-      int pivotLocation = partition(arr, low, high, 'e');
-      quickSort(arr, low, pivotLocation-1, 'e');
-      quickSort(arr, pivotLocation, high, 'e');
-    }
-    else if (e == 'u'){
-      int pivotLocation = partition(arr, low, high, 'u');
-      quickSort(arr, low, pivotLocation-1, 'u');
-      quickSort(arr, pivotLocation+1, high, 'u');
-    }
-    else if (e == 'v') {
-      int pivotLocation = partition(arr, low, high, 'v');
-      quickSort(arr, low, pivotLocation-1, 'v');
-      quickSort(arr, pivotLocation+1, high, 'v');
-    }
-    else if (e == 'n') {
-      int pivotLocation = partition(arr, low, high, 'n');
-      quickSort(arr, low, pivotLocation-1, 'n');
-      quickSort(arr, pivotLocation+1, high, 'n');
-    }
+    int pivotLocation = partition(arr, low, high, e);
+    quickSort(arr, low, pivotLocation-1, e);
+    quickSort(arr, pivotLocation, high, e);
   }
 }
 
@@ -664,16 +661,71 @@ static DA *kruskal(DA *edgeArr, int *vertexArr, int numVertices) {
 
   // sort the edges by weight
   quickSort(edgeArr, 0, numEdges, 'e');
-
+/*
+printf("sorted array of edges\n");
+displayDA(stdout, edgeArr);
+printf("\n");
+*/
   for (i = 0; i < numEdges; i++) {
     EDGE *currEdge = getDA(edgeArr, i);
-    int Udex = retrieveVertexIndex(vertexArr, 0, numVertices, currEdge->u);
-    int Vdex = retrieveVertexIndex(vertexArr, 0, numVertices, currEdge->v);
-    //printf("%d->%d(%d) || uIndex = %d, vIndex = %d\n", currEdge->u, currEdge->v, currEdge->weight, Udex, Vdex);
-    if (findSET(set, Udex) != findSET(set, Vdex)) {
-      insertDA(A, currEdge);
-      unionSET(set, Udex, Vdex);
+    DA *possibleInserts = newDA(specialDisplayNODE);
+    insertDA(possibleInserts, currEdge);
+
+    EDGE *nextEDGE;
+    int j = i+1;
+    if (j < numEdges)
+      nextEDGE = getDA(edgeArr, j);
+
+    int size = 0;
+
+    while (1) {
+      if (currEdge->weight == nextEDGE->weight) {
+        insertDA(possibleInserts, nextEDGE);
+        size += 1;
+      }
+      else break;
+
+      j += 1;
+
+      if (j < numEdges)
+        nextEDGE = getDA(edgeArr, j);
+      else break;
     }
+
+    quickSort(possibleInserts, 0, size, 'm');
+
+
+/*
+    printf("possibleInserts is: \n");
+    displayDA(stdout, possibleInserts);
+    printf("\n");
+*/
+    //now a whole group to be inserted is sorted by edge weight and vertex
+
+    int b;
+    int size2 = sizeDA(possibleInserts);
+    for (b = 0; b < size2; b++) {
+      EDGE *lookEdge = getDA(possibleInserts, b);
+
+      int Udex = retrieveVertexIndex(vertexArr, 0, numVertices, lookEdge->u);
+      int Vdex = retrieveVertexIndex(vertexArr, 0, numVertices, lookEdge->v);
+      //printf("%d->%d(%d) || uIndex = %d, vIndex = %d\n", currEdge->u, currEdge->v, currEdge->weight, Udex, Vdex);
+
+      if (findSET(set, Udex) != findSET(set, Vdex)) {
+        insertDA(A, lookEdge);
+  /*
+        printf("edge: ");
+        displayEDGE(stdout, currEdge);
+        printf(" added to mst\n");
+  */
+        unionSET(set, Udex, Vdex);
+      }
+
+
+    }
+
+    //i += size;
+
   }
 
   return A;
