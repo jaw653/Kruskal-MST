@@ -51,7 +51,7 @@ static int intCompare(const void *, const void *);
 static int *sortVertices(DA *, int);
 static int retrieveVertexIndex(int *, int, int, int);
 static int minVertex(EDGE *);
-
+static int maxVertex(EDGE *);
 /* QuickSort functions */
 static void swap(DA *, int, int);
 static void swapNodes(DA *, int, int);
@@ -419,6 +419,13 @@ static int minVertex(EDGE *e) {
   else
     return e->v;
 }
+
+static int maxVertex(EDGE *e) {
+  if (e->u > e->v)
+    return e->u;
+  else
+    return e->v;
+}
 /******************************************************************************/
 /***                           QuickSort Functions                          ***/
 /******************************************************************************/
@@ -605,6 +612,12 @@ static int partition(DA *arr, int low, int high, char e) {
         leftWall += 1;
         swapNodes(arr, i, leftWall);
       }
+      else if (minVertex(edge_i) == minVertex(pivot)) {
+        if (maxVertex(edge_i) < maxVertex(pivot)) {
+          leftWall += 1;
+          swapNodes(arr, i, leftWall);
+        }
+      }
     }
   }
 
@@ -724,7 +737,7 @@ printf("\n");
 
     }
 
-    //i += size;
+    i += size;
 
   }
 
